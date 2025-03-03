@@ -9,9 +9,15 @@ export default defineConfig({
   root: "./client",
   server: {
     port: 3000,
+    watch: {
+      usePolling: true
+    },
+    hmr: true
   },
   plugins: [
-    react(),
+    react({
+      include: "**/*.tsx",
+    }),
     deno(),
   ],
   optimizeDeps: {
