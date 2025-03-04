@@ -12,6 +12,6 @@ app.use(routeStaticFilesFrom([
 ]));
 
 if (import.meta.main) {
-  console.log("Server listening on port http://localhost:8000");
-  await app.listen({ port: 8000 });
+  console.log("Server listening on port http://localhost:3000");
+  await app.listen({ port: 3000 });
 }
