@@ -6,7 +6,9 @@
     <title>IJsland</title>
 </head>
 <body>
+    <?php include 'pages/includes/navbar.php'; ?>
     <h1>Welcome to IJsland!</h1>
     <p>Testing PHP: <?php echo "PHP is working! Current time: " . date('Y-m-d H:i:s'); ?></p>
+    <?php include 'pages/includes/footer.php'; ?>
 </body>
 </html>
