@@ -1,0 +1,33 @@
+# Docker
+.env
+docker-compose.override.yml
+*.log
+
+# PHP
+vendor/
+composer.lock
+
+# Database
+db/*.sqlite
+db/*.sqlite3
+db/*.db
+db/backups/
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Apache configuration
+apache-config/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Security
+*.key
+*.pem
