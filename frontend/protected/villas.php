@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Villa Beheer - Villa Verkenner</title>
+    <title>Villa's beheren - Villa Verkenner</title>
     <link rel="stylesheet" href="/frontend/protected/styles/villas.css">
+    <link rel="stylesheet" href="/frontend/protected/styles/photo-upload.css">
+    <link rel="stylesheet" href="/frontend/protected/styles/villa-list.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -26,6 +28,14 @@
     </svg>
 
     <?php include 'components/header.php'; ?>
+    
+    <!-- Including the database -->
+    <?php 
+    include_once $_SERVER['DOCUMENT_ROOT'] . '/db/database.php';
+    
+    // Get all villas from the database
+    $villas = get_villas();
+    ?>
     
     <div class="container">
         <div class="titel-overzicht">
@@ -85,10 +95,21 @@
                         <input type="number" id="kamers" placeholder="2" min="1">
                     </div>
                     <div class="form-group third">
-                        <label for="openbare-kamers">Openbare kamers</label>
-                        <input type="number" id="openbare-kamers" placeholder="1" min="0">
+                        <label for="badkamers">Badkamers</label>
+                        <input type="number" id="badkamers" placeholder="1" min="0">
                     </div>
                     <div class="form-group third">
+                        <label for="slaapkamers">Slaapkamers</label>
+                        <input type="number" id="slaapkamers" placeholder="1" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="oppervlakte">Oppervlakte (m²)</label>
+                        <input type="number" id="oppervlakte" placeholder="100" min="1" step="0.1">
+                    </div>
+                    <div class="form-group half">
                         <label for="prijs">Prijs</label>
                         <input type="text" id="prijs" placeholder="€ 0,00">
                     </div>
@@ -100,168 +121,249 @@
         
         <!-- Villa list -->
         <div class="villas-list-section">
-            <div class="list-header">
-                <h2>Alle villa's</h2>
-                <div class="search-box">
-                    <input type="text" placeholder="Zoeken...">
-                    <span class="search-icon">&#128269;</span>
-                </div>
-            </div>
+            <h2>Bestaande villa's</h2>
             
-            <p class="instruction">Click edit en verwijder inline.</p>
-            
-            <!-- Villa item -->
-            <div class="villa-item">
-                <div class="villa-photo">
-                    <img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80" alt="Moderne villa met zwembad">
+            <?php if (empty($villas)): ?>
+                <div class="no-villas-message">
+                    <p>Er zijn nog geen villa's toegevoegd. Voeg een nieuwe villa toe om te beginnen.</p>
                 </div>
-                
-                <div class="villa-details">
-                    <div class="detail-group">
-                        <label>Postcode</label>
-                        <div class="editable-field">
-                            <span>1071 JW</span>
-                            <input type="text" value="1071 JW" class="hidden">
+            <?php else: ?>
+                <?php foreach ($villas as $villa): ?>
+                    <?php 
+                        // Get the primary image for this villa
+                        $villa_image = get_villa_primary_image($villa['id']);
+                        $image_path = $villa_image ? $villa_image : '/frontend/assets/img/placeholder.jpg';
+                        
+                        // Get labels for this villa
+                        $villa_labels = get_villa_labels($villa['id']);
+                    ?>
+                    <div class="villa-item" data-villa-id="<?= $villa['id'] ?>">
+                        <div class="villa-image">
+                            <img src="<?= $image_path ?>" alt="Villa afbeelding">
                         </div>
-                    </div>
-                    
-                    <div class="detail-group">
-                        <label>Straatnaam</label>
-                        <div class="editable-field">
-                            <span>Schaduwzijde 60</span>
-                            <input type="text" value="Schaduwzijde 60" class="hidden">
-                        </div>
-                    </div>
-                    
-                    <div class="detail-group tags-group">
-                        <label>Tags</label>
-                        <div class="tags-display">
-                            <div class="tag">Zwembad</div>
-                            <div class="tag">Luxe</div>
-                            <div class="tag">Uitzicht</div>
-                            <button class="add-tag">+</button>
-                        </div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-group small">
-                            <label>Kamers</label>
-                            <div class="editable-field">
-                                <span>5</span>
-                                <input type="number" value="5" min="1" class="hidden">
+                        
+                        <div class="villa-details">
+                            <div class="detail-group">
+                                <label>Postcode</label>
+                                <div class="editable-field">
+                                    <span><?= htmlspecialchars($villa['post_c']) ?></span>
+                                    <input type="text" value="<?= htmlspecialchars($villa['post_c']) ?>" class="hidden">
+                                </div>
+                            </div>
+                            
+                            <div class="detail-group">
+                                <label>Adres</label>
+                                <div class="editable-field">
+                                    <span><?= htmlspecialchars($villa['straat']) ?></span>
+                                    <input type="text" value="<?= htmlspecialchars($villa['straat']) ?>" class="hidden">
+                                </div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-group">
+                                    <label>Kamers</label>
+                                    <div class="editable-field">
+                                        <span><?= htmlspecialchars($villa['kamers']) ?></span>
+                                        <input type="number" value="<?= htmlspecialchars($villa['kamers']) ?>" class="hidden">
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-group">
+                                    <label>Badkamers</label>
+                                    <div class="editable-field">
+                                        <span><?= htmlspecialchars($villa['badkamers']) ?></span>
+                                        <input type="number" value="<?= htmlspecialchars($villa['badkamers']) ?>" class="hidden">
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-group">
+                                    <label>Prijs</label>
+                                    <div class="editable-field">
+                                        <span>€ <?= number_format($villa['prijs'], 0, ',', '.') ?>,-</span>
+                                        <input type="number" value="<?= htmlspecialchars($villa['prijs']) ?>" class="hidden">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="tags-display">
+                                <?php foreach ($villa_labels as $label): ?>
+                                    <div class="tag" data-label-id="<?= $label['id'] ?>"><?= htmlspecialchars($label['naam']) ?></div>
+                                <?php endforeach; ?>
+                                <div class="add-tag">+</div>
                             </div>
                         </div>
                         
-                        <div class="detail-group small">
-                            <label>Openbare ruimtes</label>
-                            <div class="editable-field">
-                                <span>2</span>
-                                <input type="number" value="2" min="0" class="hidden">
-                            </div>
-                        </div>
-                        
-                        <div class="detail-group small">
-                            <label>Prijs</label>
-                            <div class="editable-field">
-                                <span>€ 1.203.320,-</span>
-                                <input type="text" value="1203320" class="hidden">
-                            </div>
+                        <div class="villa-actions">
+                            <button class="edit-btn" data-villa-id="<?= $villa['id'] ?>">EDITEER</button>
+                            <button class="delete-btn" data-villa-id="<?= $villa['id'] ?>">VERWIJDER</button>
                         </div>
                     </div>
-                </div>
-                
-                <div class="villa-admin">
-                    <div class="admin-icon">
-                        <span class="admin-label">P</span>
-                    </div>
-                    <div class="admin-info">
-                        <span class="admin-name">Pajer</span>
-                        <span class="admin-time">6 days ago</span>
-                        <div class="admin-message">Als je op een tag klikt wordt die verwijderd!</div>
-                    </div>
-                    <div class="admin-actions">
-                        <button class="action-btn edit-btn">EDITEER</button>
-                        <button class="action-btn delete-btn">VERWIJDER</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Second villa item -->
-            <div class="villa-item">
-                <div class="villa-photo">
-                    <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" alt="Luxe villa met tuin">
-                </div>
-                
-                <div class="villa-details">
-                    <div class="detail-group">
-                        <label>Postcode</label>
-                        <div class="editable-field">
-                            <span>1082 AA</span>
-                            <input type="text" value="1082 AA" class="hidden">
-                        </div>
-                    </div>
-                    
-                    <div class="detail-group">
-                        <label>Straatnaam</label>
-                        <div class="editable-field">
-                            <span>Burgemeesterlaan 23</span>
-                            <input type="text" value="Burgemeesterlaan 23" class="hidden">
-                        </div>
-                    </div>
-                    
-                    <div class="detail-group tags-group">
-                        <label>Tags</label>
-                        <div class="tags-display">
-                            <div class="tag">Tuin</div>
-                            <div class="tag">Modern</div>
-                            <button class="add-tag">+</button>
-                        </div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-group small">
-                            <label>Kamers</label>
-                            <div class="editable-field">
-                                <span>4</span>
-                                <input type="number" value="4" min="1" class="hidden">
-                            </div>
-                        </div>
-                        
-                        <div class="detail-group small">
-                            <label>Openbare ruimtes</label>
-                            <div class="editable-field">
-                                <span>1</span>
-                                <input type="number" value="1" min="0" class="hidden">
-                            </div>
-                        </div>
-                        
-                        <div class="detail-group small">
-                            <label>Prijs</label>
-                            <div class="editable-field">
-                                <span>€ 845.000,-</span>
-                                <input type="text" value="845000" class="hidden">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="villa-admin">
-                    <div class="admin-icon">
-                        <span class="admin-label">A</span>
-                    </div>
-                    <div class="admin-info">
-                        <span class="admin-name">Admin</span>
-                        <span class="admin-time">2 weeks ago</span>
-                    </div>
-                    <div class="admin-actions">
-                        <button class="action-btn edit-btn">EDITEER</button>
-                        <button class="action-btn delete-btn">VERWIJDER</button>
-                    </div>
-                </div>
-            </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
     
-    <script src="/frontend/protected/utils/villa.js"></script>
+    <script src="/frontend/protected/utils/add_villa_script.js"></script>
+    <script>
+        // Add event listeners for dynamic edit buttons, etc.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Edit button functionality
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const villaItem = this.closest('.villa-item');
+                    const villaId = villaItem.getAttribute('data-villa-id');
+                    
+                    if (villaItem.classList.contains('editing')) {
+                        // Save changes
+                        villaItem.classList.remove('editing');
+                        this.textContent = 'EDITEER';
+                        
+                        // Gather updated data
+                        const updateData = {
+                            id: villaId,
+                            straat: villaItem.querySelector('.detail-group:nth-child(2) input').value,
+                            post_c: villaItem.querySelector('.detail-group:nth-child(1) input').value,
+                            kamers: parseInt(villaItem.querySelector('.detail-row .detail-group:nth-child(1) input').value) || 0,
+                            badkamers: parseInt(villaItem.querySelector('.detail-row .detail-group:nth-child(2) input').value) || 0,
+                            slaapkamers: 0, // This would need a field in the UI
+                            oppervlakte: 0, // This would need a field in the UI
+                            prijs: parseInt(villaItem.querySelector('.detail-row .detail-group:nth-child(3) input').value) || 0
+                        };
+                        
+                        // Collect labels
+                        const labels = [];
+                        villaItem.querySelectorAll('.tags-display .tag').forEach(tag => {
+                            labels.push(tag.textContent.trim());
+                        });
+                        updateData.labels = labels;
+                        
+                        // Send to the server with fetch API
+                        fetch('/db/api/update_villa.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(updateData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update display
+                                villaItem.querySelectorAll('.editable-field').forEach(field => {
+                                    const input = field.querySelector('input');
+                                    const display = field.querySelector('span');
+                                    
+                                    if (input.type === 'number' && field.closest('.detail-group').querySelector('label').textContent === 'Prijs') {
+                                        display.textContent = '€ ' + parseInt(input.value).toLocaleString('nl-NL') + ',-';
+                                    } else {
+                                        display.textContent = input.value;
+                                    }
+                                });
+                                
+                                alert('Villa succesvol bijgewerkt!');
+                            } else {
+                                alert('Fout bij bijwerken: ' + (data.message || data.error));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating villa:', error);
+                            alert('Er is een fout opgetreden bij het bijwerken van de villa.');
+                        });
+                    } else {
+                        // Enter edit mode
+                        villaItem.classList.add('editing');
+                        this.textContent = 'OPSLAAN';
+                    }
+                });
+            });
+            
+            // Delete button functionality
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const villaId = this.getAttribute('data-villa-id');
+                    if (confirm('Weet je zeker dat je deze villa wilt verwijderen?')) {
+                        // Send delete request to the server
+                        fetch('/db/api/delete_villa.php?id=' + villaId, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Remove from the DOM
+                                this.closest('.villa-item').remove();
+                                alert('Villa succesvol verwijderd!');
+                                
+                                // If no villas left, show message
+                                if (document.querySelectorAll('.villa-item').length === 0) {
+                                    const message = document.createElement('div');
+                                    message.className = 'no-villas-message';
+                                    message.innerHTML = '<p>Er zijn nog geen villa\'s toegevoegd. Voeg een nieuwe villa toe om te beginnen.</p>';
+                                    document.querySelector('.villas-list-section').appendChild(message);
+                                }
+                            } else {
+                                alert('Fout bij verwijderen: ' + (data.message || data.error));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error deleting villa:', error);
+                            alert('Er is een fout opgetreden bij het verwijderen van de villa.');
+                        });
+                    }
+                });
+            });
+            
+            // Handle tag deletion
+            document.querySelectorAll('.tag').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const labelId = this.getAttribute('data-label-id');
+                    const villaId = this.closest('.villa-item').getAttribute('data-villa-id');
+                    
+                    if (confirm('Wilt u deze tag verwijderen?')) {
+                        // In a real implementation, we'd send a request to remove this label
+                        // For now, just remove from the DOM
+                        this.remove();
+                    }
+                });
+            });
+            
+            // Add tag functionality
+            document.querySelectorAll('.add-tag').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tagName = prompt('Voer een nieuwe tag in:');
+                    if (tagName && tagName.trim()) {
+                        const tagsDisplay = this.closest('.tags-display');
+                        const newTag = document.createElement('div');
+                        newTag.className = 'tag';
+                        newTag.textContent = tagName.trim();
+                        
+                        // Add click to remove
+                        newTag.addEventListener('click', function() {
+                            if (confirm('Wilt u deze tag verwijderen?')) {
+                                this.remove();
+                            }
+                        });
+                        
+                        // Insert before the add button
+                        tagsDisplay.insertBefore(newTag, this);
+                    }
+                });
+            });
+            
+            // Add CSS for edit mode
+            const style = document.createElement('style');
+            style.textContent = `
+                .villa-item.editing .editable-field span {
+                    display: none;
+                }
+                .villa-item.editing .editable-field input {
+                    display: block;
+                }
+                .editable-field input.hidden {
+                    display: none;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
 </body>
 </html> 

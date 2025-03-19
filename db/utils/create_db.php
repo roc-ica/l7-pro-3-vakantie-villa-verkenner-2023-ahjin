@@ -1,6 +1,6 @@
 <?php
 try {
-    $pdo = new PDO('sqlite:villaVerkenner.db');
+    $pdo = new PDO('sqlite:../villaVerkenner.db');
 
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -9,6 +9,8 @@ try {
         straat TEXT NOT NULL,
         post_c TEXT NOT NULL,
         kamers SMALLINT NOT NULL,
+        badkamers SMALLINT NOT NULL,
+        slaapkamers SMALLINT NOT NULL,
         oppervlakte REAL NOT NULL,
         prijs INTEGER NOT NULL
     )");
@@ -66,6 +68,13 @@ try {
         ip_adres TEXT NOT NULL,
         pagina TEXT NOT NULL,
         query TEXT NOT NULL
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS serverLogger(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        action TEXT NOT NULL,
+        message TEXT NOT NULL
     )");
 
     echo "Database tables created successfully!";
