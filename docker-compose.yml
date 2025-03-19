@@ -19,10 +19,7 @@ services:
     volumes:
       - ./:/var/www/html/
     environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=secret
-      - MYSQL_DB=ijsland_db
+      - PHP_APCU_VERSION=5.1.22
     depends_on:
       - mysql
     networks:
