@@ -1,112 +1,148 @@
 <?php
-// Suppress warnings and notices that could break JSON output
-error_reporting(0);
-header('Content-Type: application/json');
+/**
+ * API Endpoint: Update Villa
+ * Updates villa information in the database
+ */
 
-include_once '../database.php';
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
-    echo json_encode(['error' => 'Method not allowed. Please use POST.']);
-    exit;
-}
-
-// Check if we're getting form data or JSON
-$isMultipart = isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false;
-
-if ($isMultipart) {
-    // Handle form data
-    $data = $_POST;
+// Set error reporting based on environment
+$isProduction = !isset($_SERVER['ENVIRONMENT']) || $_SERVER['ENVIRONMENT'] !== 'development';
+if ($isProduction) {
+    error_reporting(0); // Suppress all errors in production
 } else {
-    // Handle JSON data
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    // If JSON parse failed, check for regular POST data
-    if (empty($data) && !empty($_POST)) {
-        $data = $_POST;
-    }
+    error_reporting(E_ALL); // Show all errors in development
 }
+
+// Define API_ACCESS for api_utils.php
+define('API_ACCESS', true);
+
+// Include dependencies
+require_once '../database.php';
+require_once 'api_utils.php';
+
+// Handle CORS
+addCorsHeaders();
+handleOptionsRequest();
+
+// Check for valid request method
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendErrorResponse(
+        'Method not allowed. Please use POST.',
+        'method_not_allowed',
+        [],
+        405
+    );
+}
+
+// Get request data
+$data = getRequestData();
 
 // Validate required fields
 $requiredFields = ['id', 'straat', 'post_c', 'kamers', 'badkamers', 'slaapkamers', 'oppervlakte', 'prijs'];
-$missingFields = [];
-
-foreach ($requiredFields as $field) {
-    if (empty($data[$field])) {
-        $missingFields[] = $field;
-    }
-}
+$missingFields = validateRequiredFields($data, $requiredFields);
 
 if (!empty($missingFields)) {
-    http_response_code(400); // Bad Request 
-    echo json_encode([
-        'error' => 'Missing required fields',
-        'missing_fields' => $missingFields
-    ]);
-    exit;
+    sendErrorResponse(
+        'Missing required fields',
+        'missing_fields',
+        ['missing_fields' => $missingFields]
+    );
 }
 
 try {
     // Start transaction
-    $pdo = connect_db();
-    $pdo->beginTransaction();
+    Database::beginTransaction();
+    
+    // Convert and sanitize inputs
+    $villaId = (int)$data['id'];
+    $straat = trim($data['straat']);
+    $postCode = trim($data['post_c']);
+    $kamers = (int)$data['kamers'];
+    $badkamers = (int)$data['badkamers'];
+    $slaapkamers = (int)$data['slaapkamers'];
+    $oppervlakte = (float)$data['oppervlakte'];
+    $prijs = (int)$data['prijs'];
+    
+    // Validate villa exists
+    $existingVilla = VillaManager::getVilla($villaId);
+    if (!$existingVilla) {
+        sendErrorResponse(
+            "Villa with ID $villaId not found",
+            'not_found',
+            [],
+            404
+        );
+    }
     
     // Update the villa
-    update_villa(
-        (int)$data['id'],
-        $data['straat'],
-        $data['post_c'],
-        (int)$data['kamers'],
-        (int)$data['badkamers'],
-        (int)$data['slaapkamers'],
-        (float)$data['oppervlakte'],
-        (int)$data['prijs']
-    );
+    if (!VillaManager::updateVilla(
+        $villaId,
+        $straat,
+        $postCode,
+        $kamers,
+        $badkamers,
+        $slaapkamers,
+        $oppervlakte,
+        $prijs
+    )) {
+        throw new Exception("Failed to update villa ID: $villaId");
+    }
     
     // Process labels if provided
-    if (!empty($data['labels'])) {
-        // First remove all existing labels
-        $stmt = $pdo->prepare("DELETE FROM villa_labels WHERE villa_id = :villa_id");
-        $stmt->execute([':villa_id' => (int)$data['id']]);
+    if (isset($data['labels'])) {
+        // Remove all existing labels first
+        LabelManager::removeAllVillaLabels($villaId);
         
-        // Then add the new ones
+        // Parse labels (handle both array and comma-separated string formats)
         $labels = is_array($data['labels']) ? $data['labels'] : explode(',', $data['labels']);
         
+        // Add each label
         foreach ($labels as $labelName) {
             $labelName = trim($labelName);
             if (!empty($labelName)) {
-                $labelId = get_or_create_label($labelName);
-                assign_label_to_villa((int)$data['id'], $labelId);
+                $labelId = LabelManager::getOrCreateLabel($labelName);
+                if ($labelId) {
+                    LabelManager::assignLabelToVilla($villaId, $labelId);
+                }
             }
         }
     }
     
     // Commit transaction
-    $pdo->commit();
+    Database::commit();
     
     // Return success response
-    echo json_encode([
-        'success' => true,
-        'message' => 'Villa successfully updated',
-        'villa_id' => (int)$data['id']
-    ]);
+    sendSuccessResponse(
+        'Villa successfully updated',
+        ['villa_id' => $villaId]
+    );
     
 } catch (PDOException $e) {
-    // Rollback transaction
-    if (isset($pdo)) {
-        $pdo->rollBack();
-    }
+    // Rollback transaction on database error
+    Database::rollback();
     
-    http_response_code(500); // Internal Server Error
-    echo json_encode([
-        'error' => 'Database error',
-        'message' => $e->getMessage()
-    ]);
+    // Log the error
+    logApiError('update_villa', $e->getMessage());
+    
+    // Return error response
+    sendErrorResponse(
+        $isProduction ? 'A database error occurred' : $e->getMessage(),
+        'database_error',
+        [],
+        500
+    );
 } catch (Exception $e) {
-    http_response_code(500); // Internal Server Error
-    echo json_encode([
-        'error' => 'Server error',
-        'message' => $e->getMessage()
-    ]);
+    // Rollback transaction on any other error
+    Database::rollback();
+    
+    // Log the error
+    logApiError('update_villa', $e->getMessage());
+    
+    // Return error response
+    sendErrorResponse(
+        $isProduction ? 'A server error occurred' : $e->getMessage(),
+        'server_error',
+        [],
+        500
+    );
 }
 ?> 
