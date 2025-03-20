@@ -1,0 +1,15 @@
+Options +FollowSymLinks -MultiViews
+RewriteEngine On
+
+# Set base directory
+RewriteBase /
+
+# Redirect root to index.php
+RewriteRule ^$ index.php [L]
+
+# Allow direct access to existing files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Forward other requests to appropriate files
+RewriteRule ^(.*)$ $1 [L] 
