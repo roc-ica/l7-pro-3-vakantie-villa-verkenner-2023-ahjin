@@ -93,8 +93,11 @@ class Database {
     // De methode beginTransaction() start een transactie door de autocommit-modus uit te schakelen. 
     // Dit betekent dat wijzigingen in de database niet worden opgeslagen totdat je expliciet commit() aanroept.
     // Als er een fout optreedt, kun je wijzigingen terugdraaien met rollBack().
+    //https://www.php.net/manual/en/pdo.begintransaction.php
+
     public static function beginTransaction(): void {
         self::getConnection()->beginTransaction();
+        // De operator -> wordt gebruikt om de methode beginTransaction() aan te roepen op het object dat is teruggegeven door getConnection().
     }
     
     /**
@@ -102,6 +105,7 @@ class Database {
      */
     public static function commit(): void {
         self::getConnection()->commit();
+        
     }
     
     /**
@@ -177,6 +181,7 @@ class VillaManager {
      * @param int $prijs Price
      * @return int|null The inserted villa ID or null on failure
      */
+    
     public static function insertVilla(
         string $straat, 
         string $post_c, 
@@ -228,6 +233,8 @@ class VillaManager {
      * @param int $prijs Price
      * @return bool Whether the update was successful
      */
+
+
     public static function updateVilla(
         int $id,
         string $straat, 
@@ -583,7 +590,6 @@ class LabelManager {
     
     /**
      * Remove all labels from a villa
-     * 
      * @param int $villaId Villa ID
      * @return bool Whether the removal was successful
      */
