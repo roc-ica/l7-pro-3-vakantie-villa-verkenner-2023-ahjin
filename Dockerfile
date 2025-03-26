@@ -1,8 +1,10 @@
+#importance, eerst system dependencies installeren, dan PHP extensions en dan composer.
+
 FROM php:8.1-apache
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
+RUN apt-get update && apt-get install -y \ 
+    git \ 
     curl \
     libsqlite3-dev \
     libpng-dev \
@@ -11,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
-# Clean up
+# Clean up, clears local repository of retrieved package information en verwijdert de cache van de gedownloade pakketten.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions

@@ -12,7 +12,7 @@ services:
       - ./db:/var/www/html/db # De directory waar de database zich bevindt
       - ./apache-config:/etc/apache2/conf-available # De directory waar de Apache configuratie zich bevindt
     restart: always # De opstartoptie voor de container
-    container_name: #unieke naam voor de container
+    container_name: villa_verkenner_php # De naam van de container
     working_dir: /var/www/html # De directory waar de werkmap zich bevindt
 
 volumes:
