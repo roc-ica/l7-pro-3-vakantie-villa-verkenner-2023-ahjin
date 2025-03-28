@@ -8,12 +8,56 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - .:/var/www/html
-      - ./db:/var/www/html/db
-      - ./apache-config:/etc/apache2/conf-available
-    restart: always
-    container_name: villa_verkenner_php
-    working_dir: /var/www/html
+      - ./:/usr/local/apache2/htdocs/
+      - ./apache-config/httpd-proxy.conf:/usr/local/apache2/conf/extra/httpd-proxy.conf
+      - ./apache-config/httpd-vhosts.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf
+    depends_on:
+      - php
+    networks:
+      - app-network
+ 
+  php:
+    image: php:8.1-apache
+    volumes:
+      - ./:/var/www/html/
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=secret
+      - MYSQL_DB=ijsland_db
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"  # Changed from 3306:3306 to 3307:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=ijsland_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=secret
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   db_data:

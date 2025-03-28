@@ -36,31 +36,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Villa Verkenner - Setup</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-        }
-        .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-        .success {
-            background-color: #dff0d8;
-            color: #3c763d;
-            border: 1px solid #d6e9c6;
-        }
-        .error {
-            background-color: #f2dede;
-            color: #a94442;
-            border: 1px solid #ebccd1;
-        }
-    </style>
+    <title>IJsland</title>
 </head>
 <body>
     <h1>Villa Verkenner - Docker Setup</h1>
