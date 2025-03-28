@@ -22,7 +22,7 @@ class Database {
         $this->dsn = "mysql:host={$this->servername};dbname={$this->database};charset={$this->charset}";
     }
 
-    public function connect() {
+    private function connect() {
         try {
             $conn = new PDO(
                 $this->dsn,
@@ -30,14 +30,21 @@ class Database {
            $this->password, 
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                           PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                          PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}"
+                          PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset}"
                           ]
             );
-            
+            return $conn;
+        } catch (PDOException $e) {
+            $logger = new ServerLogger($e->getMessage(), "error", "database", "connect");
+            $logger->LogProb();
         }
     }
 
-    public function close($conn) {
-        $conn->close();
+    private function close($conn) {
+        $conn = null;
+    }
+
+    public function getConnection() {
+        return $this->connect();
     }
 }
