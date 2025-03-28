@@ -28,7 +28,7 @@ class ServerLogger {
         $conn = $db->getConnection();
         
         try {
-            $stmt = $conn->prepare("INSERT INTO server_logs (message, level, page, action, created_at) 
+            $stmt = $conn->prepare("INSERT INTO serverLogger (message, level, page, action, created_at) 
                                    VALUES (:message, :level, :page, :action, NOW())");
             
             $stmt->bindParam(':message', $message);

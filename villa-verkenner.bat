@@ -3,17 +3,23 @@ setlocal enabledelayedexpansion
 
 REM Villa Verkenner Windows Management Script
 
-REM Color codes for Windows console
-set "GREEN=[92m"
-set "YELLOW=[93m"
-set "RED=[91m"
-set "NC=[0m"
+REM Skip using color codes since they don't work reliably on all Windows systems
+REM Use prefixes instead
 
 REM Function to print status messages
 :print_status
-set "color=%~1"
+set "type=%~1"
 set "message=%~2"
-echo !%color%!%message%!NC!
+
+if "%type%"=="GREEN" (
+    echo [SUCCESS] %message%
+) else if "%type%"=="YELLOW" (
+    echo [INFO] %message%
+) else if "%type%"=="RED" (
+    echo [ERROR] %message%
+) else (
+    echo %message%
+)
 goto :eof
 
 REM Check if Docker is installed
@@ -41,8 +47,8 @@ call :print_status YELLOW "Starting Villa Verkenner Docker containers..."
 docker-compose up -d
 call :print_status GREEN "Containers started successfully!"
 call :print_status YELLOW "Access your application at:"
-call :print_status GREEN "- Web App: http://localhost:%WEB_PORT%"
-call :print_status GREEN "- phpMyAdmin: http://localhost:%PMA_PORT%"
+call :print_status GREEN "- Web App: http://localhost:8888"
+call :print_status GREEN "- phpMyAdmin: http://localhost:8889"
 goto :eof
 
 REM Stop the server
