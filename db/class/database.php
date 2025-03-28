@@ -47,4 +47,8 @@ class Database {
     public function getConnection() {
         return $this->connect();
     }
+
+    public function closeConnection($conn) {
+        $this->close($conn);
+    }
 }
