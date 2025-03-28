@@ -1,4 +1,6 @@
 <?php
+
+use PhpParser\Node\Stmt\TryCatch;
 /**
  * VillaVerkenner Database API
  * Modern implementation with proper error handling and security
@@ -147,6 +149,17 @@ class VillaManager {
             Database::close();
         }
     }
+
+    /**
+     * Set admin session in the database after a login or a logout
+     * 
+     * @param string $username
+     * @param string $password
+     * @return bool True if the session was set, false otherwise
+     * @return string $sessionId
+     * @return datetime $sessionExpiry
+     * @return string $sessionCreated
+     */
     
     /**
      * Get a specific villa by ID
@@ -665,7 +678,7 @@ class ImageManager {
         } finally {
             Database::close();
         }
-    }
+    }    
     
     /**
      * Delete an image
@@ -696,6 +709,138 @@ class ImageManager {
         } catch (PDOException $e) {
             error_log('Error deleting image: ' . $e->getMessage());
             return null;
+        } finally {
+            Database::close();
+        }
+    }
+}
+
+class Admin
+{
+    public static function handleLogin() {
+        $db = connect_db();
+        $data = getRequestData();
+        $username = $data['username'] ?? '';
+        $password = $data['password'] ?? '';
+
+        if (empty($username) || empty($password)) {
+            sendErrorResponse('Please fill in all fields', 'invalid_login', [], 422);
+            ServerLogger::log('Missing Fields was posted', 'AdminLoginAttempt');
+            return;
+        }
+
+        try {
+            // Correct SQL syntax to select the user
+            $stmt = $db->prepare('SELECT * FROM admin_users WHERE username = :username');
+            $stmt->execute([':username' => $username]);
+            $user = $stmt->fetch();
+
+            if ($user) {
+                // Verify the password against the stored hash
+                if (password_verify($password, $user['password'])) {
+                    // Generate session token and expiry
+                    $sessionId = bin2hex(random_bytes(16));
+                    $sessionExpiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+                    $sessionCreated = date('Y-m-d H:i:s');
+
+                    // Store the session
+                    $stmt = $db->prepare('INSERT INTO admin_sessions(username, session_id, session_expiry, session_created) VALUES(:username, :sessionId, :sessionExpiry, :sessionCreated)');
+                    $stmt->execute([
+                        ':username' => $username,
+                        ':sessionId' => $sessionId,
+                        ':sessionExpiry' => $sessionExpiry,
+                        ':sessionCreated' => $sessionCreated
+                    ]);
+
+                    // Set secure cookie
+                    setcookie('admin_session', $sessionId, [
+                        'expires' => strtotime($sessionExpiry),
+                        'path' => '/',
+                        'secure' => true,
+                        'httponly' => true,
+                        'samesite' => 'Strict'
+                    ]);
+
+                    // Set session variables
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $username;
+
+                    // Return success response
+                    sendSuccessResponse('Login successful', [
+                        'sessionId' => $sessionId,
+                        'sessionExpiry' => $sessionExpiry,
+                        'sessionCreated' => $sessionCreated
+                    ]);
+                } else {
+                    sendErrorResponse('Invalid password', 'invalid_password', [], 401);
+                    ServerLogger::log('Invalid password for admin login attempt', 'AdminLoginAttempt');
+                }
+            } else {
+                sendErrorResponse('Invalid username', 'invalid_username', [], 401);
+                ServerLogger::log('Invalid username for admin login attempt', 'AdminLoginAttempt');
+            }
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
+            sendErrorResponse('Internal server error', 'database_error', [], 500);
+        } finally {
+            Database::close();
+        }
+    }
+
+    public static function handleLogout() {
+        $db = Database::getConnection();
+        try {
+            // Get the session ID from cookie
+            $sessionId = $_COOKIE['admin_session'] ?? null;
+            
+            if ($sessionId) {
+                // Delete the session from database
+                $stmt = $db->prepare('DELETE FROM admin_sessions WHERE session_id = :sessionId');
+                $stmt->execute([':sessionId' => $sessionId]);
+                
+                // Log the logout action
+                ServerLogger::log('Admin logged out', 'AdminLogout');
+            }
+            
+            // Clear the session cookie by setting it to expire in the past
+            setcookie('admin_session', '', [
+                'expires' => time() - 3600, // 1 hour in the past
+                'path' => '/',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]);
+            
+            // Destroy PHP session
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                // Clear all session variables
+                $_SESSION = [];
+                
+                // If session uses cookies, clear the session cookie
+                if (ini_get('session.use_cookies')) {
+                    $params = session_get_cookie_params();
+                    setcookie(session_name(), '', [
+                        'expires' => time() - 3600,
+                        'path' => $params['path'],
+                        'domain' => $params['domain'],
+                        'secure' => $params['secure'],
+                        'httponly' => $params['httponly'],
+                        'samesite' => $params['samesite'] ?? 'Lax'
+                    ]);
+                }
+                
+                // Finally destroy the session
+                session_destroy();
+            }
+            
+            // Return success response
+            sendSuccessResponse('Logout successful');
+            ServerLogger::log('Admin logged out', 'AdminLogout');
+
+            
+        } catch (PDOException $e) {
+            error_log('Database error during logout: ' . $e->getMessage());
+            sendErrorResponse('Logout failed', 'database_error', [], 500);
         } finally {
             Database::close();
         }

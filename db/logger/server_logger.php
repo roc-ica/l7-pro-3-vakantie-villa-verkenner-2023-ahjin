@@ -27,13 +27,13 @@ class ServerLogger {
      * @param string $message Message to log
      * @return bool Success status
      */
-    public static function log(string $message): bool
+    public static function log(string $message, string $action): bool
     {
         try {
             $db = Database::getConnection();
             $stmt = $db->prepare("INSERT INTO " . self::$table . " (action, message) VALUES (:action, :message)");
             $stmt->execute([
-                ':action' => 'system',
+                ':action' => $action,
                 ':message' => $message
             ]);
             
