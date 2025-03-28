@@ -28,7 +28,8 @@ chmod +x villa-verkenner.sh
 ```
 
 The application will be available at:
-- Web Application: http://localhost:8000
+- Web Application: http://localhost:8888
+- phpMyAdmin: http://localhost:8889
 
 ## Available Commands
 Use the management script for common operations:
@@ -45,7 +46,7 @@ For more detailed commands, see `COMMANDS.md`
 
 ## Development
 - The project uses PHP 8.1 with Apache
-- SQLite database is located in `db/` directory
+- MySQL 8.0 database with phpMyAdmin
 - Frontend files are in `frontend/` directory
 
 ## Troubleshooting

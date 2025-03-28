@@ -11,13 +11,14 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip \
+    default-mysql-client
 
 # Clean up, clears local repository of retrieved package information en verwijdert de cache van de gedownloade pakketten.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_sqlite mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install pdo_mysql mysqli pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -42,8 +43,8 @@ RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini && \
 # Create test PHP file
 RUN echo "<?php phpinfo(); ?>" > /var/www/html/info.php
 
-# Create database directory and set permissions
-RUN mkdir -p /var/www/html/database && \
+# Create logs directory
+RUN mkdir -p /var/www/html/logs && \
     chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html
 

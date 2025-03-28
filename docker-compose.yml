@@ -6,14 +6,48 @@ services:
       context: . # De root directory waarvan Docker de build context zal nemen (inclusief alle benodigde bestanden).
       dockerfile: Dockerfile # Het specifieke Dockerfile dat gebruikt wordt voor het bouwen van het image, relatief aan de context.
     ports:
-      - "8000:80" # De poort waarop de webserver luistert
+      - "${WEB_PORT:-8888}:80" # De poort waarop de webserver luistert
     volumes:
       - .:/var/www/html # De directory waar de broncode zich bevindt
-      - ./db:/var/www/html/db # De directory waar de database zich bevindt
       - ./apache-config:/etc/apache2/conf-available # De directory waar de Apache configuratie zich bevindt
     restart: always # De opstartoptie voor de container
     container_name: villa_verkenner_php # De naam van de container
     working_dir: /var/www/html # De directory waar de werkmap zich bevindt
+    depends_on:
+      - mysql
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=${username}
+      - MYSQL_PASSWORD=${password}
+      - MYSQL_DATABASE=${database}
+
+  mysql:
+    image: mysql:8.0
+    container_name: villa_verkenner_mysql
+    restart: always
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${password}
+      - MYSQL_DATABASE=${database}
+      - MYSQL_USER=${username}
+      - MYSQL_PASSWORD=${password}
+    ports:
+      - "3307:3306"
+    command: --default-authentication-plugin=mysql_native_password
+      
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: villa_verkenner_phpmyadmin
+    restart: always
+    ports:
+      - "${PMA_PORT:-8889}:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=${username}
+      - PMA_PASSWORD=${password}
+    depends_on:
+      - mysql
 
 volumes:
-  db_data: # De volume waar de database zich bevindt
+  mysql_data:

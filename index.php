@@ -6,24 +6,21 @@ $dotenv->load();
 
 // Database connection test
 try {
-    $dbFile = $_ENV['DB_FILE'] ?? '/var/www/html/db/villaverkenner.sqlite';
+    // Get MySQL connection details from environment
+    $host = $_ENV['servername'] ?? 'mysql';
+    $database = $_ENV['database'] ?? 'villa_verkenner';
+    $username = $_ENV['username'] ?? 'villa_user';
+    $password = $_ENV['password'] ?? 'securepassword';
+    $charset = $_ENV['charset'] ?? 'utf8mb4';
     
-    // Ensure the database directory exists
-    $dbDir = dirname($dbFile);
-    if (!is_dir($dbDir)) {
-        mkdir($dbDir, 0755, true);
-    }
-
-    // Create PDO connection to SQLite
-    $pdo = new PDO("sqlite:$dbFile");
+    // Create PDO connection to MySQL
+    $dsn = "mysql:host=$host;dbname=$database;charset=$charset";
+    $pdo = new PDO($dsn, $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Optional: Create a test table if it doesn't exist
-    $pdo->exec("CREATE TABLE IF NOT EXISTS test_connection (
-        id INTEGER PRIMARY KEY,
-        message TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
+    // Test the connection with a simple query
+    $stmt = $pdo->query("SELECT version() as version");
+    $mysqlVersion = $stmt->fetch()['version'];
     
     $connected = true;
 } catch(PDOException $e) {
@@ -63,22 +60,26 @@ try {
     </style>
 </head>
 <body>
-    <h1>Villa Verkenner - Docker Setup</h1>
+    <h1>Villa Verkenner - Setup</h1>
     
     <div class="status <?= $connected ? 'success' : 'error' ?>">
         <?php if ($connected): ?>
-            SQLite Connection: ✅ Successfully Connected
+            MySQL Connection: ✅ Successfully Connected
+            <p>MySQL Version: <?= htmlspecialchars($mysqlVersion) ?></p>
         <?php else: ?>
-            SQLite Connection: ❌ Failed 
+            MySQL Connection: ❌ Failed 
             <p>Error: <?= htmlspecialchars($error ?? 'Unknown error') ?></p>
         <?php endif; ?>
     </div>
 
     <div class="status">
         <h2>Environment Details</h2>
-        <p>Database File: <?= htmlspecialchars($dbFile) ?></p>
+        <p>Database Host: <?= htmlspecialchars($host) ?></p>
+        <p>Database Name: <?= htmlspecialchars($database) ?></p>
+        <p>PHP Version: <?= phpversion() ?></p>
     </div>
 
-    <p>If you see a green success message, your Docker setup is working correctly!</p>
+    <p>If you see a green success message, your setup is working correctly!</p>
+    <p>Access phpMyAdmin at: <a href="http://localhost:<?= $_ENV['PMA_PORT'] ?? '8889' ?>">http://localhost:<?= $_ENV['PMA_PORT'] ?? '8889' ?></a></p>
 </body>
 </html>

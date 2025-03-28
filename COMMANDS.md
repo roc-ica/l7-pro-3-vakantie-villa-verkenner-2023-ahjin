@@ -108,7 +108,7 @@ docker network inspect villa_verkenner_network
 ```
 
 ## Application Access
-- **Web Application**: http://localhost:8000
+- **Web Application**: http://localhost:8888
 
 ## Troubleshooting Workflow
 1. Check container status: `docker-compose ps`
@@ -190,3 +190,34 @@ Usage:
 - Keep `.env` file secure and out of version control
 - Regularly backup your SQLite database
 - Monitor container resource usage 
+
+## MySQL Management
+```bash
+# Access MySQL shell
+docker-compose exec mysql mysql -u${username} -p${password} ${database}
+
+# Import SQL file
+docker-compose exec -T mysql mysql -u${username} -p${password} ${database} < your_file.sql
+
+# Export database
+docker-compose exec mysql mysqldump -u${username} -p${password} ${database} > backup.sql
+
+# Create a backup of the database
+./villa-verkenner.sh backup
+
+# Restore a backup
+./villa-verkenner.sh restore path/to/backup.sql
+
+# Open MySQL shell via script
+./villa-verkenner.sh db_shell
+```
+
+## phpMyAdmin
+- Access phpMyAdmin at: http://localhost:8889
+- Login with your MySQL credentials defined in .env file
+- Features include:
+  - Database structure viewing and editing
+  - SQL query execution
+  - Import/Export data
+  - User management
+  - Table operations 
