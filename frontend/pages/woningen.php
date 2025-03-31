@@ -73,8 +73,7 @@
             $query = "
     SELECT v.id, v.straat, v.post_c, v.oppervlakte, v.prijs, 
            (SELECT image_path FROM villa_images WHERE villa_id = v.id LIMIT 1) AS image
-    FROM villas v
-";
+    FROM villas v";
             $result = $conn->query($query);
 
             while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
