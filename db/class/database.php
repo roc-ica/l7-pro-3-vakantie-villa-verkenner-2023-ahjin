@@ -12,7 +12,6 @@ class Database {
     private $charset;
     private $dsn;
 
-
     public function __construct() {
         $this->servername = $_ENV['servername'];
         $this->username = $_ENV['username'];
@@ -26,17 +25,16 @@ class Database {
         try {
             $conn = new PDO(
                 $this->dsn,
-                $this->username, 
-                $this->password, 
+                $this->username,
+                $this->password,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset}"
-                ]
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset}"]
             );
             return $conn;
         } catch (PDOException $e) {
-            $logger = new ServerLogger($e->getMessage(), "error", "database", "connect");
-            $logger->LogProb();
+            // Error handling without ServerLogger
+            echo "Database connection failed: " . $e->getMessage();
         }
     }
 
@@ -54,7 +52,7 @@ class Database {
 
     /**
      * Begin a database transaction
-     * 
+     *
      * @param PDO|null $conn Optional existing connection
      * @return PDO Database connection with active transaction
      */
@@ -65,10 +63,10 @@ class Database {
         $conn->beginTransaction();
         return $conn;
     }
-    
+
     /**
      * Commit a database transaction
-     * 
+     *
      * @param PDO $conn Database connection with active transaction
      * @return bool Success status
      */
@@ -78,10 +76,10 @@ class Database {
         }
         return false;
     }
-    
+
     /**
      * Rollback a database transaction
-     * 
+     *
      * @param PDO $conn Database connection with active transaction
      * @return bool Success status
      */
@@ -91,17 +89,17 @@ class Database {
         }
         return false;
     }
-    
+
     /**
      * Execute a callback function within a transaction
-     * 
+     *
      * @param callable $callback Function to execute within transaction
      * @return mixed Result from the callback
      * @throws Exception Any exceptions from the callback
      */
     public function executeInTransaction(callable $callback) {
         $conn = $this->connect();
-        
+
         try {
             $conn->beginTransaction();
             $result = $callback($conn);
@@ -111,13 +109,8 @@ class Database {
             if ($conn->inTransaction()) {
                 $conn->rollBack();
             }
-            // Log the error
-            try {
-                $logger = new ServerLogger($e->getMessage(), "error", "database", "transaction");
-                $logger->LogProb();
-            } catch (Exception $logException) {
-                // Prevent logging errors from hiding the original exception
-            }
+            // Error handling without ServerLogger
+            echo "Transaction failed: " . $e->getMessage();
             throw $e;
         } finally {
             $this->close($conn);
