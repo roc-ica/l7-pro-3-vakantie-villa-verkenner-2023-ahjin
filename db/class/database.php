@@ -26,12 +26,12 @@ class Database {
         try {
             $conn = new PDO(
                 $this->dsn,
-           $this->username, 
-           $this->password, 
+                $this->username, 
+                $this->password, 
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                          PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                          PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset}"
-                          ]
+                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset}"
+                ]
             );
             return $conn;
         } catch (PDOException $e) {

@@ -6,7 +6,7 @@ class ApiHelper {
     private const EXPECTED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
     private const MAX_INPUT_LENGTH = 8192; // 8KB max input size for security
 
-    public static function validateRequestMethod(): bool {
+    private static function validateRequestMethod(): bool {
         $method = $_SERVER['REQUEST_METHOD'] ?? null;
         
         if (!in_array($method, self::EXPECTED_METHODS, true)) {
@@ -21,7 +21,7 @@ class ApiHelper {
         return true;
     }
 
-    public static function getRequestData(): ?array {
+    private static function getRequestData(): ?array {
         if (!self::validateRequestMethod()) {
             return null;
         }
@@ -61,5 +61,13 @@ class ApiHelper {
         }
 
         return $data ?? [];
+    }
+
+
+    public function ProccessApi() {
+        $data = $this->getRequestData();
+        if ($data === null) {
+            ServerLogger::logToDatabase("No data available", "minor", "backend", "api_Req");
+        }
     }
 }

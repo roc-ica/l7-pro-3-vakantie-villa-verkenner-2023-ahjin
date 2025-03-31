@@ -42,7 +42,7 @@ class ServerLogger {
             $db->closeConnection($conn);
             
             return true;
-        } catch (PDOException $e) {
+        } catch (PDOException $e) { 
             // Don't use self-logging here to avoid infinite recursion
             error_log("Logging error: " . $e->getMessage());
             
@@ -54,7 +54,7 @@ class ServerLogger {
     }
     
     // Private helper method for the instance version
-    private function logToDatabase($message, $level, $page, $action) {
+    public static function logToDatabase($message, $level, $page, $action) {
         return self::Log($message, $level, $page, $action);
     }
 }
