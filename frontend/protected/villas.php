@@ -3,96 +3,117 @@ include 'components/header.php';
 include_once '../../db/class/database.php';
 $conn = (new Database())->getConnection();
 
-// Haal alle villa's op
-$query = "
-    SELECT v.id, v.straat, v.post_c, v.oppervlakte, v.prijs, 
-           (SELECT image_path FROM villa_images WHERE villa_id = v.id LIMIT 1) AS image,
-           GROUP_CONCAT(l.naam SEPARATOR ', ') AS labels
-    FROM villas v
-    LEFT JOIN villa_labels vl ON v.id = vl.villa_id
-    LEFT JOIN labels l ON vl.label_id = l.id
-    GROUP BY v.id
-";
+// Villa toevoegen
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
+    if (isset($_POST['id'])) {  // Als we een id hebben, dan bewerken we de villa
+        // Villa bijwerken
+        $stmt = $conn->prepare("UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
+                                badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, prijs = :prijs 
+                                WHERE id = :id");
+        $stmt->execute([
+            'id' => $_POST['id'],
+            'straat' => $_POST['straat'],
+            'post_c' => $_POST['post_c'],
+            'kamers' => $_POST['kamers'],
+            'badkamers' => $_POST['badkamers'],
+            'slaapkamers' => $_POST['slaapkamers'],
+            'oppervlakte' => $_POST['oppervlakte'],
+            'prijs' => $_POST['prijs']
+        ]);
+    } else {
+        // Villa toevoegen
+        $stmt = $conn->prepare("INSERT INTO villas (straat, post_c, kamers, badkamers, slaapkamers, oppervlakte, prijs) 
+                               VALUES (:straat, :post_c, :kamers, :badkamers, :slaapkamers, :oppervlakte, :prijs)");
+        $stmt->execute([
+            'straat' => $_POST['straat'],
+            'post_c' => $_POST['post_c'],
+            'kamers' => $_POST['kamers'],
+            'badkamers' => $_POST['badkamers'],
+            'slaapkamers' => $_POST['slaapkamers'],
+            'oppervlakte' => $_POST['oppervlakte'],
+            'prijs' => $_POST['prijs']
+        ]);
+    }
+    header("Location: villas.php");
+    exit();
+}
 
-$result = $conn->query($query);
-$villas = $result->fetchAll(PDO::FETCH_ASSOC);
-$conn = null;
+// Villa verwijderen
+if (isset($_GET['delete'])) {
+    $stmt = $conn->prepare("DELETE FROM villas WHERE id = :id");
+    $stmt->execute(['id' => $_GET['delete']]);
+    header("Location: villas.php");
+    exit();
+}
+
+// Villa bewerken (we halen de gegevens op voor de geselecteerde villa)
+$villaToEdit = null;
+if (isset($_GET['edit'])) {
+    $stmt = $conn->prepare("SELECT * FROM villas WHERE id = :id");
+    $stmt->execute(['id' => $_GET['edit']]);
+    $villaToEdit = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// Villas ophalen voor weergave
+$stmt = $conn->query("SELECT * FROM villas");
+$villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Villa's beheren</title>
     <link rel="stylesheet" href="../protected/styles/villas.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa Admin Panel</title>
 </head>
 <body>
-<div class="container">
-    <h1>Villa Beheer</h1>
+<h2>Villa Toevoegen / Bewerken</h2>
 
-    <div class="villa-form">
-        <h2>Nieuwe villa toevoegen</h2>
-        <form id="villaForm">
-            <input type="text" id="straat" placeholder="Straatnaam" required>
-            <input type="text" id="postcode" placeholder="Postcode" required>
-            <input type="number" id="oppervlakte" placeholder="Oppervlakte (m²)" required>
-            <input type="number" id="prijs" placeholder="Prijs (€)" required>
-            <button type="submit">Villa toevoegen</button>
-        </form>
-    </div>
+<form method="post">
+    <?php if ($villaToEdit): ?>
+        <input type="hidden" name="id" value="<?= $villaToEdit['id'] ?>"> <!-- Hidden field for villa ID -->
+    <?php endif; ?>
+    <input type="text" name="straat" placeholder="Straatnaam" required value="<?= $villaToEdit['straat'] ?? '' ?>">
+    <input type="text" name="post_c" placeholder="Postcode" required value="<?= $villaToEdit['post_c'] ?? '' ?>">
+    <input type="number" name="kamers" placeholder="Kamers" required value="<?= $villaToEdit['kamers'] ?? '' ?>">
+    <input type="number" name="badkamers" placeholder="Badkamers" required value="<?= $villaToEdit['badkamers'] ?? '' ?>">
+    <input type="number" name="slaapkamers" placeholder="Slaapkamers" required value="<?= $villaToEdit['slaapkamers'] ?? '' ?>">
+    <input type="number" step="0.01" name="oppervlakte" placeholder="Oppervlakte (m²)" required value="<?= $villaToEdit['oppervlakte'] ?? '' ?>">
+    <input type="number" name="prijs" placeholder="Prijs (€)" required value="<?= $villaToEdit['prijs'] ?? '' ?>">
+    <button type="submit"><?= $villaToEdit ? 'Bewerken' : 'Toevoegen' ?></button>
+</form>
 
-    <div class="villa-list">
-        <h2>Bestaande villa's</h2>
-        <div id="villaContainer">
-            <?php foreach ($villas as $villa): ?>
-                <div class="villa-item" data-id="<?= $villa['id'] ?>">
-                    <img src="<?= $villa['image'] ?: '../../assets/img/default.png' ?>" alt="Villa">
-                    <h3><?= htmlspecialchars($villa['straat']) ?>, <?= htmlspecialchars($villa['post_c']) ?></h3>
-                    <p>Oppervlakte: <?= $villa['oppervlakte'] ?> m²</p>
-                    <p>Prijs: € <?= number_format($villa['prijs'], 2, ',', '.') ?></p>
-                    <button class="edit-btn">Bewerken</button>
-                    <button class="delete-btn">Verwijderen</button>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.getElementById('villaForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const data = {
-            straat: document.getElementById('straat').value,
-            postcode: document.getElementById('postcode').value,
-            oppervlakte: document.getElementById('oppervlakte').value,
-            prijs: document.getElementById('prijs').value
-        };
-
-        fetch('/db/api/add_villa.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        }).then(res => res.json()).then(response => {
-            if (response.success) location.reload();
-            else alert('Fout bij toevoegen');
-        });
-    });
-
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.closest('.villa-item').getAttribute('data-id');
-            if (confirm('Weet je zeker dat je deze villa wilt verwijderen?')) {
-                fetch('/db/api/delete_villa.php?id=' + id, {method: 'POST'})
-                    .then(res => res.json()).then(response => {
-                    if (response.success) location.reload();
-                    else alert('Fout bij verwijderen');
-                });
-            }
-        });
-    });
-
-    
-</script>
+<h2>Overzicht van Villa's</h2>
+<table border="1">
+    <tr>
+        <th>Straat</th>
+        <th>Postcode</th>
+        <th>Kamers</th>
+        <th>Badkamers</th>
+        <th>Slaapkamers</th>
+        <th>Oppervlakte (m²)</th>
+        <th>Prijs (€)</th>
+        <th>Actie</th>
+    </tr>
+    <?php foreach ($villas as $villa): ?>
+        <tr>
+            <td><?= htmlspecialchars($villa['straat']) ?></td>
+            <td><?= htmlspecialchars($villa['post_c']) ?></td>
+            <td><?= $villa['kamers'] ?></td>
+            <td><?= $villa['badkamers'] ?></td>
+            <td><?= $villa['slaapkamers'] ?></td>
+            <td><?= $villa['oppervlakte'] ?></td>
+            <td>€ <?= number_format($villa['prijs'], 0, ',', '.') ?></td>
+            <td>
+                <a href="?edit=<?= $villa['id'] ?>">Bewerken</a> |
+                <a href="?delete=<?= $villa['id'] ?>" onclick="return confirm('Weet je zeker dat je deze villa wilt verwijderen?');">Verwijderen</a>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</table>
 </body>
 </html>
