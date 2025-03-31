@@ -30,9 +30,9 @@
     <?php include 'components/header.php'; ?>
     
     <!-- Including the database -->
-    <?php 
-    include_once $_SERVER['DOCUMENT_ROOT'] . '/db/database.php';
-    
+    <?php
+    include_once '../../db/class/database.php';
+
     // Get all villas from the database
     $villas = get_villas();
     ?>

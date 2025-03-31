@@ -64,67 +64,60 @@
         </aside>
 
         <main class="properties-grid">
-            <?php
-            $properties = [
-                [
-                    'image' => '../../assets/img/house1.png',
-                    'address' => 'Skólavörðustígur 101 Reykjavík',
-                    'price' => '€ 1.203.320,-',
-                    'tags' => ['zwembad', 'aan zee', 'winkels in de buurt', 'Entertainment'],
-                    'size' => '500m²'
-                ],
-                [
-                    'image' => '../../assets/img/house1.png',
-                    'address' => 'Skólavörðustígur 101 Reykjavík',
-                    'price' => '€ 1.203.320,-',
-                    'tags' => ['zwembad', 'aan zee', 'winkels in de buurt', 'Entertainment'],
-                    'size' => '500m²'
-                ],
-                [
-                    'image' => '../../assets/img/house1.png',
-                    'address' => 'Skólavörðustígur 101 Reykjavík',
-                    'price' => '€ 1.203.320,-',
-                    'tags' => ['zwembad', 'aan zee', 'winkels in de buurt', 'Entertainment'],
-                    'size' => '500m²'
-                ],
-                [
-                    'image' => '../../assets/img/house1.png',
-                    'address' => 'Skólavörðustígur 101 Reykjavík',
-                    'price' => '€ 1.203.320,-',
-                    'tags' => ['zwembad', 'aan zee', 'winkels in de buurt', 'Entertainment'],
-                    'size' => '500m²'
-                ],
-                [
-                    'image' => '../../assets/img/house1.png',
-                    'address' => 'Skólavörðustígur 101 Reykjavík',
-                    'price' => '€ 1.203.320,-',
-                    'tags' => ['zwembad', 'aan zee', 'winkels in de buurt', 'Entertainment'],
-                    'size' => '500m²'
-                ],
-                [
-                    'image' => '../../assets/img/house1.png',
-                    'address' => 'Skólavörðustígur 101 Reykjavík',
-                    'price' => '€ 1.203.320,-',
-                    'tags' => ['zwembad', 'aan zee', 'winkels in de buurt', 'Entertainment'],
-                    'size' => '500m²'
-                ],
-            ];
+            <?php include '../../db/class/database.php';
+            // Verkrijg de databaseverbinding
+            $conn = (new Database())->getConnection();
 
-            foreach ($properties as $property) {
-                echo '<div class="property-card">';
-                echo '<img src="' . $property['image'] . '" alt="Property Image">';
-                echo '<h3>' . $property['address'] . '</h3>';
-                echo '<p class="price">' . $property['price'] . '</p>';
-                echo '<div class="tags">';
-                foreach ($property['tags'] as $tag) {
-                    echo '<span class="tag">' . $tag . '</span>';
+            $properties = [];
+
+            $query = "
+    SELECT v.id, v.straat, v.post_c, v.oppervlakte, v.prijs, 
+           (SELECT image_path FROM villa_images WHERE villa_id = v.id LIMIT 1) AS image
+    FROM villas v
+";
+            $result = $conn->query($query);
+
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                // Haal labels op
+                $labels_query = "
+        SELECT l.naam 
+        FROM labels l 
+        JOIN villa_labels vl ON l.id = vl.label_id 
+        WHERE vl.villa_id = " . $row['id'];
+                $labels_result = $conn->query($labels_query);
+
+                $tags = [];
+                while ($label = $labels_result->fetch(PDO::FETCH_ASSOC)) {
+                    $tags[] = $label['naam'];
                 }
-                echo '</div>';
-                echo '<p class="size">' . $property['size'] . '</p>';
-                echo '<a href="#" class="view-more">bekijk meer →</a>';
-                echo '</div>';
+
+                $properties[] = [
+                    'image' => $row['image'] ?: '../../assets/img/default.png', // Als er geen afbeelding is, toon een standaardafbeelding
+                    'address' => $row['straat'] . ', ' . $row['post_c'],
+                    'price' => '€ ' . number_format($row['prijs'], 2, ',', '.'),
+                    'tags' => $tags,
+                    'size' => $row['oppervlakte'] . 'm²'
+                ];
             }
+
+            $conn = null; // Sluit de verbinding
             ?>
+
+            <!-- HTML Output -->
+            <?php foreach ($properties as $property): ?>
+                <div class="property-card">
+                    <img src="<?= $property['image']; ?>" alt="Property Image">
+                    <h3><?= $property['address']; ?></h3>
+                    <p class="price"><?= $property['price']; ?></p>
+                    <div class="tags">
+                        <?php foreach ($property['tags'] as $tag): ?>
+                            <span class="tag"><?= $tag; ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="size"><?= $property['size']; ?></p>
+                    <a href="#" class="view-more">Bekijk meer →</a>
+                </div>
+            <?php endforeach; ?>
             <div class="end-list">einde lijst</div>
             <div class="pagination">
                 <button>&lt;</button>
