@@ -16,6 +16,7 @@ people:
       - Woningen
     functies:
       - Zoeken
+      - dynamic woningen ophalen uit db
 
   - name: musie
     pages:

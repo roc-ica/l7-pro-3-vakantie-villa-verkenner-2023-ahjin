@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Villa's beheren - Villa Verkenner</title>
-    <link rel="stylesheet" href="/frontend/protected/styles/villas.css">
-    <link rel="stylesheet" href="/frontend/protected/styles/photo-upload.css">
-    <link rel="stylesheet" href="/frontend/protected/styles/villa-list.css">
+    <link rel="stylesheet" href="../protected/styles/villas.css">
+    <link rel="stylesheet" href="../protected/styles/photo-upload.css">
+    <link rel="stylesheet" href="../protected/styles/villa-list.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>

@@ -121,7 +121,7 @@
                 <div class="card-content">
                     <h2>Villa Beheer</h2>
                     <p>Beheer alle villas, beoordelingen en details</p>
-                    <a href="/frontend/protected/villas.php" class="card-btn">Beheren</a>
+                    <a href="../protected/villas.php" class="card-btn">Beheren</a>
                 </div>
             </div>
             
@@ -130,7 +130,7 @@
                 <div class="card-content">
                     <h2>Ticket Beheer</h2>
                     <p>Bekijk en beantwoord vragen en problemen van gebruikers</p>
-                    <a href="/frontend/protected/tickets.php" class="card-btn">Bekijken</a>
+                    <a href="../protected/tickets.php" class="card-btn">Bekijken</a>
                 </div>
             </div>
         </div>
