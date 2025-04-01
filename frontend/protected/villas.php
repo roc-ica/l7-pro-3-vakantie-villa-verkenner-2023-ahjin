@@ -1,63 +1,74 @@
 <?php
 include 'components/header.php';
 include_once '../../db/class/database.php';
-$conn = (new Database())->getConnection();
 
-// Villa toevoegen
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
-    try {
-        $conn->beginTransaction();
+// Improve error handling for database connection
+try {
+    $db = new Database();
+    $conn = $db->getConnection();
+    
+    if (!$conn) {
+        throw new Exception("Database connection failed. Please check the server configuration.");
+    }
+    
+    // Villa toevoegen
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
+        try {
+            $conn->beginTransaction();
 
-        // Stap 1: Villa opslaan
-        $stmt = $conn->prepare("INSERT INTO villas (straat, post_c, kamers, badkamers, slaapkamers, oppervlakte, prijs) 
-                               VALUES (:straat, :post_c, :kamers, :badkamers, :slaapkamers, :oppervlakte, :prijs)");
-        $stmt->execute([
-            'straat' => $_POST['straat'],
-            'post_c' => $_POST['post_c'],
-            'kamers' => $_POST['kamers'],
-            'badkamers' => $_POST['badkamers'],
-            'slaapkamers' => $_POST['slaapkamers'],
-            'oppervlakte' => $_POST['oppervlakte'],
-            'prijs' => $_POST['prijs']
-        ]);
-        $villaId = $conn->lastInsertId();
+            // Stap 1: Villa opslaan
+            $stmt = $conn->prepare("INSERT INTO villas (straat, post_c, kamers, badkamers, slaapkamers, oppervlakte, prijs) 
+                                   VALUES (:straat, :post_c, :kamers, :badkamers, :slaapkamers, :oppervlakte, :prijs)");
+            $stmt->execute([
+                'straat' => $_POST['straat'],
+                'post_c' => $_POST['post_c'],
+                'kamers' => $_POST['kamers'],
+                'badkamers' => $_POST['badkamers'],
+                'slaapkamers' => $_POST['slaapkamers'],
+                'oppervlakte' => $_POST['oppervlakte'],
+                'prijs' => $_POST['prijs']
+            ]);
+            $villaId = $conn->lastInsertId();
 
-        // Stap 2: Afbeelding uploaden
-        if (!empty($_FILES['villa_image']['name'])) {
-            $targetDir = "../uploads/";
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0777, true);
+            // Stap 2: Afbeelding uploaden
+            if (!empty($_FILES['villa_image']['name'])) {
+                $targetDir = "../uploads/";
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0777, true);
+                }
+
+                $fileName = time() . "_" . basename($_FILES["villa_image"]["name"]);
+                $targetFilePath = $targetDir . $fileName;
+
+                if (move_uploaded_file($_FILES["villa_image"]["tmp_name"], $targetFilePath)) {
+                    $stmt = $conn->prepare("INSERT INTO villa_images (villa_id, image_path) VALUES (:villa_id, :image_path)");
+                    $stmt->execute(['villa_id' => $villaId, 'image_path' => $targetFilePath]);
+                }
             }
 
-            $fileName = time() . "_" . basename($_FILES["villa_image"]["name"]);
-            $targetFilePath = $targetDir . $fileName;
-
-            if (move_uploaded_file($_FILES["villa_image"]["tmp_name"], $targetFilePath)) {
-                $stmt = $conn->prepare("INSERT INTO villa_images (villa_id, image_path) VALUES (:villa_id, :image_path)");
-                $stmt->execute(['villa_id' => $villaId, 'image_path' => $targetFilePath]);
-            }
+            $conn->commit();
+            header("Location: villas.php");
+            exit();
+        } catch (Exception $e) {
+            $conn->rollBack();
+            echo "Fout bij het toevoegen van villa: " . $e->getMessage();
         }
+    }
 
-        $conn->commit();
+    // Villa verwijderen
+    if (isset($_GET['delete'])) {
+        $stmt = $conn->prepare("DELETE FROM villas WHERE id = :id");
+        $stmt->execute(['id' => $_GET['delete']]);
         header("Location: villas.php");
         exit();
-    } catch (Exception $e) {
-        $conn->rollBack();
-        echo "Fout bij het toevoegen van villa: " . $e->getMessage();
     }
-}
 
-// Villa verwijderen
-if (isset($_GET['delete'])) {
-    $stmt = $conn->prepare("DELETE FROM villas WHERE id = :id");
-    $stmt->execute(['id' => $_GET['delete']]);
-    header("Location: villas.php");
-    exit();
+    // Villas ophalen
+    $stmt = $conn->query("SELECT * FROM villas");
+    $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    echo "Fout bij het verbinden met de database: " . $e->getMessage();
 }
-
-// Villas ophalen
-$stmt = $conn->query("SELECT * FROM villas");
-$villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -148,8 +159,7 @@ $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         <?php endforeach; ?>
     </div>
-</body>
-</html>
+</div>
 
 <script>
     // Get the modal and the delete link
@@ -185,3 +195,5 @@ $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
 </script>
+</body>
+</html>

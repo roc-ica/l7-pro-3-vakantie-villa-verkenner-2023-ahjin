@@ -1,6 +1,5 @@
 <?php
 
-include_once __DIR__ . '/../class/serverlogger.php';
 
 class ApiHelper {
         private const EXPECTED_METHODS = ["GET", "POST", "PUT", "DELETE"];
@@ -10,12 +9,6 @@ class ApiHelper {
         $method = $_SERVER['REQUEST_METHOD'] ?? null;
         
         if (!in_array($method, self::EXPECTED_METHODS, true)) {
-            ServerLogger::log(
-                "Invalid method: {$method}", 
-                "error", 
-                "api", 
-                "validateRequestMethod"
-            );
             return false;
         }
         return true;
@@ -35,12 +28,6 @@ class ApiHelper {
         
         // Basic security check for input size
         if (strlen($input) > self::MAX_INPUT_LENGTH) {
-            ServerLogger::log(
-                "Input data exceeds maximum allowed size", 
-                "error", 
-                "api", 
-                "getRequestData"
-            );
             return null;
         }
 
@@ -51,12 +38,6 @@ class ApiHelper {
         $data = json_decode($input, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            ServerLogger::log(
-                "JSON decode error: " . json_last_error_msg(), 
-                "error", 
-                "api", 
-                "getRequestData"
-            );
             return null;
         }
 
@@ -65,9 +46,16 @@ class ApiHelper {
 
 
     public function ProccessApi() {
-        $data = $this->getRequestData();
+        $data = self::getRequestData();
         if ($data === null) {
-            ServerLogger::logToDatabase("No data available", "minor", "backend", "api_Req");
+            throw new Exception("Invalid request method or data format");
         }
+        
+        // Return empty data for now, will be expanded later
+        return [
+            'status' => 'success',
+            'message' => 'API request processed successfully',
+            'data' => $data
+        ];
     }
 }
