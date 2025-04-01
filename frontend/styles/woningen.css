@@ -6,14 +6,6 @@ body {
     color: #333;
 }
 
-header {
-    background-color: #ffffff;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
 
 .logo img {
     height: 40px;

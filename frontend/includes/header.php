@@ -1,7 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="frontend/includes/header.css">
+</head>
+<body>
 <header class="site-header">
     <div class="header-container">
         <a href="/" class="logo">
-            <img src="../../assets/img/logo.png" alt="Villa Verkenner Logo">
+            <img src="/assets/img/logo.png" alt="Villa Verkenner Logo" class="logo-image">
         </a>
         <nav class="main-nav">
             <ul>
@@ -16,3 +25,5 @@
         </div>
     </div>
 </header>
+</body>
+</html>
