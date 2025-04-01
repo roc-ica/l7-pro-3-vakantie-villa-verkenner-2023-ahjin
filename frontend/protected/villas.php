@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
 
         // Stap 2: Afbeelding uploaden
         if (!empty($_FILES['villa_image']['name'])) {
-            $targetDir = "uploads/";
+            $targetDir = "../uploads/";
             if (!is_dir($targetDir)) {
                 mkdir($targetDir, 0777, true);
             }
@@ -134,7 +134,15 @@ $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <p><?= $villa['oppervlakte'] ?> m² - €<?= number_format($villa['prijs'], 0, ',', '.') ?></p>
                     <div class="villa-actions">
                         <a href="edit_villa.php?id=<?= $villa['id'] ?>" class="action-btn edit-btn">Bewerken</a>
-                        <a href="?delete=<?= $villa['id'] ?>" class="action-btn delete-btn" onclick="return confirm('Weet je zeker dat je deze villa wilt verwijderen?');">Verwijderen</a>
+                        <a href="?delete=<?= $villa['id'] ?>" class="action-btn delete-btn" id="deleteLink">Verwijderen</a>
+                    </div>
+                </div>
+                <div id="deleteModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <p>Weet je zeker dat je deze villa wilt verwijderen?</p>
+                        <button id="confirmDelete" class="confirm-btn">Ja, Verwijderen</button>
+                        <button id="cancelDelete" class="cancel-btn">Annuleren</button>
                     </div>
                 </div>
             </div>
@@ -142,3 +150,38 @@ $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </body>
 </html>
+
+<script>
+    // Get the modal and the delete link
+    const modal = document.getElementById("deleteModal");
+    const deleteLink = document.getElementById("deleteLink");
+
+    // Get the buttons inside the modal
+    const confirmDelete = document.getElementById("confirmDelete");
+    const cancelDelete = document.getElementById("cancelDelete");
+
+    // Get the close button inside the modal
+    const closeBtn = document.getElementsByClassName("close-btn")[0];
+
+    // When the user clicks the delete link, show the modal
+    deleteLink.onclick = function(event) {
+        event.preventDefault(); // Prevent the default action (i.e., following the link)
+        modal.style.display = "block"; // Show the modal
+    }
+
+    // When the user clicks on the close button, hide the modal
+    closeBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks "Annuleren", hide the modal
+    cancelDelete.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks "Ja, Verwijderen", proceed with the delete action
+    confirmDelete.onclick = function() {
+        window.location.href = deleteLink.href; // Redirect to the delete URL
+    }
+
+</script>
