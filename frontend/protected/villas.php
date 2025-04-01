@@ -5,23 +5,10 @@ $conn = (new Database())->getConnection();
 
 // Villa toevoegen
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
-    if (isset($_POST['id'])) {  // Als we een id hebben, dan bewerken we de villa
-        // Villa bijwerken
-        $stmt = $conn->prepare("UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
-                                badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, prijs = :prijs 
-                                WHERE id = :id");
-        $stmt->execute([
-            'id' => $_POST['id'],
-            'straat' => $_POST['straat'],
-            'post_c' => $_POST['post_c'],
-            'kamers' => $_POST['kamers'],
-            'badkamers' => $_POST['badkamers'],
-            'slaapkamers' => $_POST['slaapkamers'],
-            'oppervlakte' => $_POST['oppervlakte'],
-            'prijs' => $_POST['prijs']
-        ]);
-    } else {
-        // Villa toevoegen
+    try {
+        $conn->beginTransaction();
+
+        // Stap 1: Villa opslaan
         $stmt = $conn->prepare("INSERT INTO villas (straat, post_c, kamers, badkamers, slaapkamers, oppervlakte, prijs) 
                                VALUES (:straat, :post_c, :kamers, :badkamers, :slaapkamers, :oppervlakte, :prijs)");
         $stmt->execute([
@@ -33,9 +20,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
             'oppervlakte' => $_POST['oppervlakte'],
             'prijs' => $_POST['prijs']
         ]);
+        $villaId = $conn->lastInsertId();
+
+        // Stap 2: Afbeelding uploaden
+        if (!empty($_FILES['villa_image']['name'])) {
+            $targetDir = "uploads/";
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0777, true);
+            }
+
+            $fileName = time() . "_" . basename($_FILES["villa_image"]["name"]);
+            $targetFilePath = $targetDir . $fileName;
+
+            if (move_uploaded_file($_FILES["villa_image"]["tmp_name"], $targetFilePath)) {
+                $stmt = $conn->prepare("INSERT INTO villa_images (villa_id, image_path) VALUES (:villa_id, :image_path)");
+                $stmt->execute(['villa_id' => $villaId, 'image_path' => $targetFilePath]);
+            }
+        }
+
+        $conn->commit();
+        header("Location: villas.php");
+        exit();
+    } catch (Exception $e) {
+        $conn->rollBack();
+        echo "Fout bij het toevoegen van villa: " . $e->getMessage();
     }
-    header("Location: villas.php");
-    exit();
 }
 
 // Villa verwijderen
@@ -46,15 +55,7 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-// Villa bewerken (we halen de gegevens op voor de geselecteerde villa)
-$villaToEdit = null;
-if (isset($_GET['edit'])) {
-    $stmt = $conn->prepare("SELECT * FROM villas WHERE id = :id");
-    $stmt->execute(['id' => $_GET['edit']]);
-    $villaToEdit = $stmt->fetch(PDO::FETCH_ASSOC);
-}
-
-// Villas ophalen voor weergave
+// Villas ophalen
 $stmt = $conn->query("SELECT * FROM villas");
 $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -63,57 +64,81 @@ $villas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../protected/styles/villas.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Villa Admin Panel</title>
+    <link rel="stylesheet" href="../protected/styles/villas.css">
 </head>
 <body>
-<h2>Villa Toevoegen / Bewerken</h2>
 
-<form method="post">
-    <?php if ($villaToEdit): ?>
-        <input type="hidden" name="id" value="<?= $villaToEdit['id'] ?>"> <!-- Hidden field for villa ID -->
-    <?php endif; ?>
-    <input type="text" name="straat" placeholder="Straatnaam" required value="<?= $villaToEdit['straat'] ?? '' ?>">
-    <input type="text" name="post_c" placeholder="Postcode" required value="<?= $villaToEdit['post_c'] ?? '' ?>">
-    <input type="number" name="kamers" placeholder="Kamers" required value="<?= $villaToEdit['kamers'] ?? '' ?>">
-    <input type="number" name="badkamers" placeholder="Badkamers" required value="<?= $villaToEdit['badkamers'] ?? '' ?>">
-    <input type="number" name="slaapkamers" placeholder="Slaapkamers" required value="<?= $villaToEdit['slaapkamers'] ?? '' ?>">
-    <input type="number" step="0.01" name="oppervlakte" placeholder="Oppervlakte (m²)" required value="<?= $villaToEdit['oppervlakte'] ?? '' ?>">
-    <input type="number" name="prijs" placeholder="Prijs (€)" required value="<?= $villaToEdit['prijs'] ?? '' ?>">
-    <button type="submit"><?= $villaToEdit ? 'Bewerken' : 'Toevoegen' ?></button>
-</form>
+<div class="container">
+    <div class="titel-overzicht">
+        <h1>Villa Beheer</h1>
+        <p class="subtitle">Voeg nieuwe villa's toe, bewerk of verwijder ze.</p>
+    </div>
 
-<h2>Overzicht van Villa's</h2>
-<table border="1">
-    <tr>
-        <th>Straat</th>
-        <th>Postcode</th>
-        <th>Kamers</th>
-        <th>Badkamers</th>
-        <th>Slaapkamers</th>
-        <th>Oppervlakte (m²)</th>
-        <th>Prijs (€)</th>
-        <th>Actie</th>
-    </tr>
-    <?php foreach ($villas as $villa): ?>
-        <tr>
-            <td><?= htmlspecialchars($villa['straat']) ?></td>
-            <td><?= htmlspecialchars($villa['post_c']) ?></td>
-            <td><?= $villa['kamers'] ?></td>
-            <td><?= $villa['badkamers'] ?></td>
-            <td><?= $villa['slaapkamers'] ?></td>
-            <td><?= $villa['oppervlakte'] ?></td>
-            <td>€ <?= number_format($villa['prijs'], 0, ',', '.') ?></td>
-            <td>
-                <a href="?edit=<?= $villa['id'] ?>">Bewerken</a> |
-                <a href="?delete=<?= $villa['id'] ?>" onclick="return confirm('Weet je zeker dat je deze villa wilt verwijderen?');">Verwijderen</a>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</table>
+    <div class="upload-section">
+        <h2>Nieuwe Villa Toevoegen</h2>
+        <form method="post" enctype="multipart/form-data" class="villa-form">
+            <div class="form-group">
+                <label for="straat">Straatnaam</label>
+                <input type="text" name="straat" id="straat" required>
+            </div>
+            <div class="form-group">
+                <label for="post_c">Postcode</label>
+                <input type="text" name="post_c" id="post_c" required>
+            </div>
+            <div class="form-group">
+                <label for="kamers">Kamers</label>
+                <input type="number" name="kamers" id="kamers" required>
+            </div>
+            <div class="form-group">
+                <label for="badkamers">Badkamers</label>
+                <input type="number" name="badkamers" id="badkamers" required>
+            </div>
+            <div class="form-group">
+                <label for="slaapkamers">Slaapkamers</label>
+                <input type="number" name="slaapkamers" id="slaapkamers" required>
+            </div>
+            <div class="form-group">
+                <label for="oppervlakte">Oppervlakte (m²)</label>
+                <input type="number" name="oppervlakte" id="oppervlakte" required>
+            </div>
+            <div class="form-group">
+                <label for="prijs">Prijs (€)</label>
+                <input type="number" name="prijs" id="prijs" required>
+            </div>
+            <div class="form-group">
+                <label for="villa_image">Afbeelding uploaden</label>
+                <input type="file" name="villa_image" id="villa_image" accept="image/*">
+            </div>
+            <button type="submit" class="submit-btn">Toevoegen</button>
+        </form>
+    </div>
+
+    <div class="villa-grid">
+        <?php foreach ($villas as $villa): ?>
+            <div class="villa-card">
+                <div class="villa-photo">
+                    <?php
+                    $stmtImg = $conn->prepare("SELECT image_path FROM villa_images WHERE villa_id = :villa_id LIMIT 1");
+                    $stmtImg->execute(['villa_id' => $villa['id']]);
+                    $image = $stmtImg->fetch(PDO::FETCH_ASSOC);
+                    $imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg';
+                    ?>
+                    <img src="<?= htmlspecialchars($imagePath) ?>" alt="Villa Afbeelding">
+                </div>
+                <div class="villa-info">
+                    <h3><?= htmlspecialchars($villa['straat']) ?></h3>
+                    <p><?= htmlspecialchars($villa['post_c']) ?></p>
+                    <p><?= $villa['kamers'] ?> Kamers - <?= $villa['badkamers'] ?> Badkamers - <?= $villa['slaapkamers'] ?> Slaapkamers</p>
+                    <p><?= $villa['oppervlakte'] ?> m² - €<?= number_format($villa['prijs'], 0, ',', '.') ?></p>
+                    <div class="villa-actions">
+                        <a href="edit_villa.php?id=<?= $villa['id'] ?>" class="action-btn edit-btn">Bewerken</a>
+                        <a href="?delete=<?= $villa['id'] ?>" class="action-btn delete-btn" onclick="return confirm('Weet je zeker dat je deze villa wilt verwijderen?');">Verwijderen</a>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
 </body>
 </html>
