@@ -3,7 +3,7 @@
 include_once __DIR__ . '/../class/serverlogger.php';
 
 class ApiHelper {
-    private const EXPECTED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+        private const EXPECTED_METHODS = ["GET", "POST", "PUT", "DELETE"];
     private const MAX_INPUT_LENGTH = 8192; // 8KB max input size for security
 
     private static function validateRequestMethod(): bool {
@@ -27,7 +27,7 @@ class ApiHelper {
         }
 
         // Only attempt to read input for methods that typically have a body
-        if (!in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        if (!in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE'], true)) {
             return [];
         }
 
