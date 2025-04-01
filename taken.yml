@@ -1,0 +1,28 @@
+people:
+  - name: Colin
+    pages:
+      - Over ons
+      - Contact
+    functies:
+      - Mail formulier
+
+  - name: Artem
+    pages:
+      - Home
+      - Footer
+      - Header
+    functies: []
+
+  - name: kaj
+    pages:
+      - Woningen
+    functies:
+      - Zoeken
+
+  - name: musie
+    pages:
+      - Login en Admin
+    functies:
+      - Database
+      - Login 
+      - Admin
