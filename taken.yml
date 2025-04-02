@@ -17,6 +17,7 @@ people:
     functies:
       - Zoeken
       - dynamic woningen ophalen uit db
+      - automatish PDF genereren
 
   - name: musie
     pages:
