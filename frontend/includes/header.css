@@ -1,0 +1,79 @@
+a {
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  ul {
+    list-style: none;
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+/* Hero Section with Navbar */
+.hero {
+    position: relative;
+    min-height: 600px;
+    background-color: #fff;
+    overflow: hidden;
+  }
+  
+  /* Floating Navbar */
+  .navbar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 20px;
+  }
+  
+  .navbar {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50px;
+    padding: 10px 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .logo img {
+    height: 40px;
+  }
+  
+  .nav-links {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-links li {
+    margin-left: 25px;
+  }
+  
+  .nav-links a {
+    font-weight: 500;
+    transition: color 0.3s;
+  }
+  
+  .nav-links a:hover {
+    color: #009688;
+  }
+  
+  .register-btn {
+    padding: 5px 15px;
+    border: 1px solid #333;
+    border-radius: 4px;
+  }
+  
+  .login-btn {
+    padding: 5px 15px;
+    background-color: #009688;
+    color: white;
+    border-radius: 4px;
+  }
+  

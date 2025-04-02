@@ -6,28 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vakantie Villas - IJsland</title>
     <link rel="stylesheet" href="../styles/overons.css">
+    <link rel="stylesheet" href="../includes/header.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <!-- Hero Section with Header -->
-    <section class="hero">
-        <div class="navbar-container">
-            <div class="navbar">
-                <div class="logo">
-                    <a href="#"><img src="../../assets/img/logo.png" alt="Vakantie Villas Logo"></a>
-                </div>
-                <nav>
-                    <ul class="nav-links">
-                        <li><a href="#">Woningen</a></li>
-                        <li><a href="#">Ons</a></li>
-                        <li><a href="#">Contact</a></li>
-                        <li><a href="#" class="register-btn">Register</a></li>
-                        <li><a href="#" class="login-btn">Login</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+   <?php include '../includes/header.php'; ?>
 
         <div class="hero-content-wrapper">
             <div class="hero-content">
@@ -92,24 +77,27 @@
 
     <!-- Office Section -->
     <section class="office">
-        <div class="container">
-            <div class="office-content">
-                <h2>Ons kantoor in IJsland</h2>
-                <p>Gelegen in het centrum van Reykjavik, is ons kantoor de perfecte uitvalsbasis voor het verkennen van de mooiste vakantiewoningen in IJsland. Kom langs en ontdek wat wij voor u kunnen betekenen.</p>
-            </div>
-            <div class="office-image">
-                <img src="images/office.jpg" alt="Office in Iceland">
-            </div>
+        <div class="floating-squares">
+            <div class="square square-1"></div>
+            <div class="square square-2"></div>
+            <div class="square square-3"></div>
+            <div class="square square-4"></div>
+            <div class="square square-5"></div>
+            <div class="square square-6"></div>
+        </div>
 
-            <div class="geometric-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-                <div class="shape shape-4"></div>
+        <div class="container">
+            <div class="office-card">
+                <div class="office-content">
+                    <h2>Ons kantoor in IJsland</h2>
+                    <p>Ons team staat klaar om jou te begeleiden bij het vinden van de perfecte vakantiewoning. Bezoek ons kantoor of neem contact op voor vrijblijvend advies!</p>
+                </div>
+                <div class="office-image">
+                    <img src="../../assets/img/kantoor.png" alt="Office in Iceland">
+                </div>
             </div>
         </div>
     </section>
-
     <!-- Footer -->
     <footer>
         <div class="container footer-container">
@@ -305,6 +293,97 @@
             // Initialize first member as active
             thumbnails[0].classList.add('active');
         });
+        // Slower flying squares with more rotation
+        const squares = document.querySelectorAll('.square');
+        const officeSection = document.querySelector('.office');
+
+        // Set initial positions and rotations
+        squares.forEach((square, index) => {
+            // Assign different initial rotations
+            const initialRotation = -15 + (index * 10);
+
+            // Set initial vertical positions
+            const verticalOffset = (index % 2 === 0) ? -10 : 10;
+
+            square.style.transform = `rotate(${initialRotation}deg) translateY(${verticalOffset}px)`;
+            square.dataset.rotation = initialRotation;
+            square.dataset.verticalOffset = verticalOffset;
+
+            // Add a unique rotation speed for each square
+            square.dataset.rotationSpeed = 120 + (index * 30);
+
+            // Add a continuous rotation animation
+            square.style.transition = 'transform 0.5s ease-out';
+        });
+
+        // Track last scroll position to determine direction
+        let lastScrollTop = 0;
+        let scrollDirection = 'down';
+
+        // Handle scroll event
+        window.addEventListener('scroll', function() {
+                    if (!officeSection) return;
+
+                    // Determine scroll direction
+                    const st = window.pageYOffset || document.documentElement.scrollTop;
+                    scrollDirection = st > lastScrollTop ? 'down' : 'up';
+                    lastScrollTop = st;
+
+                    const officeSectionRect = officeSection.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+                    const sectionTop = officeSectionRect.top;
+
+                    // Only animate when approaching and passing the section
+                    // Expanded range for slower animation
+                    if (sectionTop < viewportHeight * 1.5 && sectionTop > -viewportHeight * 0.8) {
+                        // Calculate progress: 0 when section is at bottom of viewport, 1 when at top
+                        // Slowed down by dividing by a larger number
+                        const progress = Math.min(1, Math.max(0, 1 - (sectionTop / (viewportHeight * 1.5))));
+
+                        squares.forEach((square, index) => {
+                            // Get initial values
+                            const initialRotation = parseInt(square.dataset.rotation) || 0;
+                            const verticalOffset = parseInt(square.dataset.verticalOffset) || 0;
+                            const rotationSpeed = parseInt(square.dataset.rotationSpeed) || 120;
+
+                            // Create a slower exponential movement
+                            const exponentialFactor = Math.pow(progress, 1.5) * 0.7; // Reduced factor for slower movement
+
+                            // Calculate horizontal movement (flying to the right) - SLOWER
+                            const horizontalSpeed = 400 + (index * 50); // Reduced speed
+                            const horizontalMove = exponentialFactor * horizontalSpeed;
+
+                            // Calculate vertical movement - SLOWER
+                            const verticalDirection = verticalOffset > 0 ? 1 : -1;
+                            const verticalSpeed = 50 + (index * 10); // Reduced speed
+                            const verticalMove = verticalOffset + (exponentialFactor * verticalSpeed * verticalDirection);
+
+                            // Calculate continuous rotation - MORE PRONOUNCED
+                            // Base rotation + continuous rotation based on progress
+                            const baseRotation = initialRotation + (exponentialFactor * 60);
+
+                            // Add continuous rotation effect
+                            // This creates a spinning effect as they fly off
+                            const continuousRotation = baseRotation + (progress * rotationSpeed * (index % 2 === 0 ? 1 : -1));
+
+                            // Apply transformations
+                            square.style.transform = `
+                    rotate(${continuousRotation}deg) 
+                    translateX(${horizontalMove}px) 
+                    translateY(${verticalMove}px)
+                `;
+
+                            // Adjust opacity to fade out as they fly away - SLOWER
+                            const opacity = Math.max(0, 0.5 - (exponentialFactor * 0.4));
+                            square.style.opacity = opacity;
+                        });
+                    } else {
+                        // Reset squares when not in view
+                        squares.forEach(square => {
+                            square.style.transform = `rotate(0deg) translateX(0px) translateY(0px)`;
+                            square.style.opacity = 1;
+                        });
+                    }})
     </script>
 </body>
 
