@@ -36,9 +36,7 @@ class Filter {
         } else {
             
         }
-
         $returnFilteredPrice = $conn->query('SELECT');
-
     }
 
 }
