@@ -40,7 +40,7 @@ class Database {
         } catch (PDOException $e) {
             // More detailed error handling
             error_log("Database connection failed: " . $e->getMessage());
-            echo "Database connection failed: " . $e->getMessage();
+            // Don't echo the error, just return null
             return null;
         }
     }

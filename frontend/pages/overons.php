@@ -8,34 +8,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header Section -->
-    <header>
-        <div class="container header-container">
-            <div class="logo">
-                <a href="#"><img src="images/logo.png" alt="Vakantie Villas Logo"></a>
-            </div>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="#">Woningen</a></li>
-                    <li><a href="#">Ons</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#" class="register-btn">Register</a></li>
-                    <li><a href="#" class="login-btn">Login</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
+    <!-- Hero Section with Header -->
     <section class="hero">
-        <div class="container hero-container">
+        <div class="navbar-container">
+            <div class="navbar">
+                <div class="logo">
+                    <a href="#"><img src="../../assets/img/logo.png" alt="Vakantie Villas Logo"></a>
+                </div>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#">Woningen</a></li>
+                        <li><a href="#">Ons</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#" class="register-btn">Register</a></li>
+                        <li><a href="#" class="login-btn">Login</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <div class="hero-content-wrapper">
             <div class="hero-content">
                 <h1>Wij zijn <br><span class="highlight">Vakantie</span><br>Villas</h1>
-                <p>De specialist in luxe vakantiewoningen. Vind uw droomhuis voor uw vakantie en ervaar de magie van de unieke locatie.</p>
-                <div class="hero-shape"></div>
+                <p>Dé specialist in luxe vakantiewoningen. Vind jouw droomverblijf in IJsland en ervaar de magie van dit unieke land!</p>
             </div>
             <div class="hero-image">
-                <img src="images/hero-image.jpg" alt="Winter scene in Iceland">
+                <img src="../../assets/img/ijsland-header.png" alt="Winter scene in Iceland">
             </div>
         </div>
     </section>
@@ -165,19 +163,21 @@
     
     let currentPosition = 0;
     
-    nextBtn.addEventListener('click', function() {
-        if (currentPosition > -200) {
-            currentPosition -= 100;
-            galleryImages.style.transform = `translateX(${currentPosition}px)`;
-        }
-    });
-    
-    prevBtn.addEventListener('click', function() {
-        if (currentPosition < 0) {
-            currentPosition += 100;
-            galleryImages.style.transform = `translateX(${currentPosition}px)`;
-        }
-    });
+    if (prevBtn && nextBtn && galleryImages) {
+        nextBtn.addEventListener('click', function() {
+            if (currentPosition > -200) {
+                currentPosition -= 100;
+                galleryImages.style.transform = `translateX(${currentPosition}px)`;
+            }
+        });
+        
+        prevBtn.addEventListener('click', function() {
+            if (currentPosition < 0) {
+                currentPosition += 100;
+                galleryImages.style.transform = `translateX(${currentPosition}px)`;
+            }
+        });
+    }
     
     // Team member selection
     const teamThumbnails = document.querySelectorAll('.team-thumbnails img');
@@ -185,22 +185,26 @@
     const memberName = document.querySelector('.member-info h3');
     const memberTitle = document.querySelector('.member-info p');
     
-    const teamMembers = [
-        { name: 'Jan-Willem', title: 'Eigenaar/Verhuurmakelaar' },
-        { name: 'Lisa', title: 'Marketing Manager' },
-        { name: 'Erik', title: 'Vastgoedadviseur' },
-        { name: 'Sophie', title: 'Klantenservice' },
-        { name: 'Thomas', title: 'Fotograaf' },
-        { name: 'Anna', title: 'Locatiemanager' }
-    ];
-    
-    teamThumbnails.forEach((thumbnail, index) => {
-        thumbnail.addEventListener('click', function() {
-            featuredMember.src = this.src;
-            memberName.textContent = teamMembers[index].name;
-            memberTitle.textContent = teamMembers[index].title;
+    if (teamThumbnails.length && featuredMember && memberName && memberTitle) {
+        const teamMembers = [
+            { name: 'Jan-Willem', title: 'Eigenaar/Verhuurmakelaar' },
+            { name: 'Lisa', title: 'Marketing Manager' },
+            { name: 'Erik', title: 'Vastgoedadviseur' },
+            { name: 'Sophie', title: 'Klantenservice' },
+            { name: 'Thomas', title: 'Fotograaf' },
+            { name: 'Anna', title: 'Locatiemanager' }
+        ];
+        
+        teamThumbnails.forEach((thumbnail, index) => {
+            if (index < teamMembers.length) {
+                thumbnail.addEventListener('click', function() {
+                    featuredMember.src = this.src;
+                    memberName.textContent = teamMembers[index].name;
+                    memberTitle.textContent = teamMembers[index].title;
+                });
+            }
         });
-    });
+    }
 });
     </script>
 </body>
