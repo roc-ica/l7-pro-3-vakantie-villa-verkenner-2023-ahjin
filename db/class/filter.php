@@ -1,7 +1,6 @@
 <?php
 
-use PhpParser\Node\Expr\Cast\Double;
-use PhpParser\Node\Expr\List_;
+include_once __DIR__ . '/database.php';
 
 class Filter {
     private float $minPrice;
@@ -25,6 +24,21 @@ class Filter {
         $this->minOppervlakte = $minOppervlakte;
         $this->eigenschappen = $eigenschappen;
         $this->zoekTerm = $zoekTerm;
+    }
+
+    private static function FilterInPrice()
+    {
+        $db = new Database();
+        $conn = $db->getConnection();
+
+        if ($conn === null) {
+            throw new Exception('Database connection failed, got Null');
+        } else {
+            
+        }
+
+        $returnFilteredPrice = $conn->query('SELECT');
+
     }
 
 }
