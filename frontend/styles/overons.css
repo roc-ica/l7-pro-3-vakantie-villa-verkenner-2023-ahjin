@@ -16,7 +16,6 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
 }
 
 a {
@@ -148,30 +147,66 @@ img {
 }
 
 /* Nature Section */
+/* Nature Section - Updated to match design */
 .nature {
     padding: 80px 0;
-    text-align: center;
-    background-color: #f5f7fa;
+    background-color: #e8f1f8; /* Light blue background */
     position: relative;
+}
+
+.nature-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.nature-content {
+    flex: 1;
+    text-align: left;
+    max-width: 500px;
 }
 
 .nature h2 {
     font-size: 2rem;
     margin-bottom: 15px;
     color: #333;
+    text-align: left;
 }
 
 .nature p {
-    max-width: 700px;
-    margin: 0 auto 40px;
-    color: #666;
+    margin-bottom: 30px;
+    color: #555;
+    line-height: 1.6;
 }
 
-.nature-gallery {
+.nature-images {
+    flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 40px;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.nature-images img {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.cta-button {
+    display: inline-block;
+    background-color: #009688;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.cta-button:hover {
+    background-color: #00796b;
 }
 
 .gallery-images {
@@ -216,7 +251,7 @@ img {
 
 /* Team Section */
 .team {
-    background-color: #009688;
+    background-color: #009688; /* Teal background */
     color: white;
     padding: 60px 0;
     position: relative;
@@ -224,9 +259,10 @@ img {
 }
 
 .team h2 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     margin-bottom: 40px;
-    text-align: center;
+    text-align: left;
+    font-weight: 700;
 }
 
 .team-background {
@@ -234,20 +270,20 @@ img {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 350px;
 }
 
-.team-background::before {
-    content: "Jan-Willem Jan-Willem Jan-Willem";
+.scrolling-name {
     position: absolute;
     font-size: 8rem;
-    opacity: 0.1;
+    opacity: 0.2;
     white-space: nowrap;
     top: 50%;
-    left: 0;
     transform: translateY(-50%);
     width: 100%;
-    text-align: center;
     font-weight: bold;
+    z-index: 1;
+    text-transform: uppercase
 }
 
 .team-member-featured {
@@ -258,52 +294,75 @@ img {
 }
 
 .team-member-featured img {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
+    width: 180px;
+    height: 180px;
     object-fit: cover;
-    border: 5px solid white;
+    border: 3px solid white;
 }
 
 .member-info {
     margin-top: 10px;
+    display: flex;
+    justify-content: center;
 }
 
-.member-info h3 {
-    font-size: 1.5rem;
+.member-label {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 15px;
+    border-radius: 4px;
+    color: #333;
+    display: inline-block;
+}
+
+.member-label h3 {
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.member-label p {
+    font-size: 0.9rem;
+    margin: 0;
+    color: #555;
 }
 
 .team-cursor {
     position: absolute;
-    right: 25%;
-    top: 50%;
     z-index: 3;
+    pointer-events: none;
+    transition: transform 0.1s ease;
 }
 
 .team-cursor img {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
+    transition: transform 0.3s ease;
 }
 
 .team-thumbnails {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 10px;
     margin-top: 20px;
+    z-index: 2;
+    position: relative;
 }
 
 .team-thumbnails img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
     border: 2px solid white;
     cursor: pointer;
-    transition: transform 0.3s;
+    transition: transform 0.3s, border 0.3s;
+    opacity: 0.7;
 }
 
-.team-thumbnails img:hover {
+.team-thumbnails img:hover, 
+.team-thumbnails img.active {
     transform: scale(1.1);
+    opacity: 1;
+    border: 2px solid #fff;
 }
 
 /* Office Section */
@@ -430,6 +489,23 @@ footer {
 
 /* Responsive Styles */
 @media (max-width: 992px) {
+    .nature-container {
+        flex-direction: column;
+    }
+    
+    .nature-content {
+        max-width: 100%;
+        text-align: center;
+    }
+    
+    .nature h2 {
+        text-align: center;
+    }
+    
+    .nature-images {
+        justify-content: center;
+    }
+    
     .hero-content-wrapper {
         flex-direction: column;
         height: auto;
@@ -483,6 +559,16 @@ footer {
 }
 
 @media (max-width: 576px) {
+    .nature-images {
+        flex-wrap: wrap;
+    }
+    
+    .nature-images img {
+        width: 100%;
+        max-width: 300px;
+        height: 200px;
+    }
+
     .hero h1 {
         font-size: 2.5rem;
     }

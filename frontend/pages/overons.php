@@ -40,25 +40,17 @@
 
     <!-- Nature Section -->
     <section class="nature">
-        <div class="container">
-            <h2>Ontdek de prachtige natuur van IJsland!</h2>
-            <p>Van adembenemende watervallen tot mystieke noorderlicht en vulkanische landschappen - IJsland biedt unieke ervaringen voor ieder seizoen!</p>
-            
-            <div class="nature-gallery">
-                <div class="gallery-nav prev">
-                    <span>&lt;</span>
-                </div>
-                <div class="gallery-images">
-                    <img src="images/nature-1.jpg" alt="Iceland landscape with water">
-                    <img src="images/nature-2.jpg" alt="Northern lights in Iceland">
-                    <img src="images/nature-3.jpg" alt="Green landscape in Iceland">
-                </div>
-                <div class="gallery-nav next">
-                    <span>&gt;</span>
-                </div>
+        <div class="container nature-container">
+            <div class="nature-content">
+                <h2>Ontdek de prachtige natuur van IJsland!</h2>
+                <p>Van uitgestrekte lavavelden en kristalheldere meren tot het magische noorderlicht – beleef IJsland vanuit jouw eigen vakantiewoning!</p>
+                <a href="#" class="cta-button">Vind jouw droomwoning</a>
             </div>
-            
-            <a href="#" class="cta-button">Vind jouw droomwoning</a>
+            <div class="nature-images">
+                <img src="../../assets/img/ijsland-view1.png" alt="Iceland landscape with water and flowers">
+                <img src="../../assets/img/ijsland-view2.png" alt="Northern lights over mountain in Iceland">
+                <img src="../../assets/img/ijsland-view3.png" alt="Northern lights reflected in water in Iceland">
+            </div>
         </div>
     </section>
 
@@ -67,26 +59,30 @@
         <div class="container">
             <h2>Wij zijn "IJsland"</h2>
             
-            <div class="team-background">
+            <div class="team-background" id="team-background">
+                <div class="scrolling-name" id="scrolling-name"></div>
+                
                 <div class="team-member-featured">
-                    <img src="images/team-member.jpg" alt="Team member">
+                    <img id="featured-member-img" src="../../assets/img/Jan-Willem.png" alt="Team member">
                     <div class="member-info">
-                        <h3>Jan-Willem</h3>
-                        <p>Eigenaar/Verhuurmakelaar</p>
+                        <div class="member-label">
+                            <h3 id="member-name">Jan-Willem</h3>
+                            <p id="member-title">Marketingmanager</p>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="team-cursor">
-                    <img src="images/cursor.png" alt="Cursor">
+                <div class="team-cursor" id="team-cursor">
+                    <img src="../../assets/img/arrow.png" alt="Cursor">
                 </div>
                 
                 <div class="team-thumbnails">
-                    <img src="images/team-thumb-1.jpg" alt="Team member thumbnail">
-                    <img src="images/team-thumb-2.jpg" alt="Team member thumbnail">
-                    <img src="images/team-thumb-3.jpg" alt="Team member thumbnail">
-                    <img src="images/team-thumb-4.jpg" alt="Team member thumbnail">
-                    <img src="images/team-thumb-5.jpg" alt="Team member thumbnail">
-                    <img src="images/team-thumb-6.jpg" alt="Team member thumbnail">
+                    <img src="../../assets/img/Jan-Willem.png" alt="Team member thumbnail" data-index="0" class="active">
+                    <img src="../../assets/img/Peter.png" alt="Team member thumbnail" data-index="1">
+                    <img src="../../assets/img/King-Henry.png" alt="Team member thumbnail" data-index="2">
+                    <img src="../../assets/img/Hendrick.png" alt="Team member thumbnail" data-index="3">
+                    <img src="../../assets/img/Adolf.png" alt="Team member thumbnail" data-index="4">
+                    <img src="../../assets/img/Einstein.png" alt="Team member thumbnail" data-index="5">
                 </div>
             </div>
         </div>
@@ -156,55 +152,132 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-    // Gallery navigation
-    const prevBtn = document.querySelector('.gallery-nav.prev');
-    const nextBtn = document.querySelector('.gallery-nav.next');
-    const galleryImages = document.querySelector('.gallery-images');
+    // Team members data
+    const teamMembers = [
+        { name: 'Jan-Willem', title: 'Marketingmanager', image: '../../assets/img/Jan-Willem.png' },
+        { name: 'Peter', title: 'Vastgoedadviseur', image: '../../assets/img/Peter.png' },
+        { name: 'Henry', title: 'Klantenservice', image: '../../assets/img/King-Henry.png' },
+        { name: 'Hendrick', title: 'Fotograaf', image: '../../assets/img/Hendrick.png' },
+        { name: 'Adolf', title: 'Locatiemanager', image: '../../assets/img/Adolf.png' },
+        { name: 'Einstein', title: 'Eigenaar', image: '../../assets/img/Einstein.png' }
+    ];
+
+    let currentMemberIndex = 0;
     
-    let currentPosition = 0;
+    // Elements
+    const teamBackground = document.getElementById('team-background');
+    const scrollingName = document.getElementById('scrolling-name');
+    const featuredMemberImg = document.getElementById('featured-member-img');
+    const memberName = document.getElementById('member-name');
+    const memberTitle = document.getElementById('member-title');
+    const teamCursor = document.getElementById('team-cursor');
+    const thumbnails = document.querySelectorAll('.team-thumbnails img');
     
-    if (prevBtn && nextBtn && galleryImages) {
-        nextBtn.addEventListener('click', function() {
-            if (currentPosition > -200) {
-                currentPosition -= 100;
-                galleryImages.style.transform = `translateX(${currentPosition}px)`;
+    // Initialize scrolling name
+    updateScrollingName();
+    
+    // Custom cursor following mouse
+    if (teamBackground && teamCursor) {
+        let cursorDirection = 'right'; // default direction
+        
+        teamBackground.addEventListener('mousemove', function(e) {
+            const rect = teamBackground.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Update cursor position
+            teamCursor.style.left = x + 'px';
+            teamCursor.style.top = y + 'px';
+            
+            // Check if cursor is on left or right side of screen
+            const midpoint = rect.width / 2;
+            if (x < midpoint && cursorDirection === 'right') {
+                cursorDirection = 'left';
+                teamCursor.querySelector('img').style.transform = 'scaleX(-1)';
+            } else if (x >= midpoint && cursorDirection === 'left') {
+                cursorDirection = 'right';
+                teamCursor.querySelector('img').style.transform = 'scaleX(1)';
             }
         });
         
-        prevBtn.addEventListener('click', function() {
-            if (currentPosition < 0) {
-                currentPosition += 100;
-                galleryImages.style.transform = `translateX(${currentPosition}px)`;
+        // Click to navigate
+        teamBackground.addEventListener('click', function(e) {
+            if (cursorDirection === 'right') {
+                nextMember();
+            } else {
+                prevMember();
             }
         });
     }
     
-    // Team member selection
-    const teamThumbnails = document.querySelectorAll('.team-thumbnails img');
-    const featuredMember = document.querySelector('.team-member-featured img');
-    const memberName = document.querySelector('.member-info h3');
-    const memberTitle = document.querySelector('.member-info p');
-    
-    if (teamThumbnails.length && featuredMember && memberName && memberTitle) {
-        const teamMembers = [
-            { name: 'Jan-Willem', title: 'Eigenaar/Verhuurmakelaar' },
-            { name: 'Lisa', title: 'Marketing Manager' },
-            { name: 'Erik', title: 'Vastgoedadviseur' },
-            { name: 'Sophie', title: 'Klantenservice' },
-            { name: 'Thomas', title: 'Fotograaf' },
-            { name: 'Anna', title: 'Locatiemanager' }
-        ];
-        
-        teamThumbnails.forEach((thumbnail, index) => {
-            if (index < teamMembers.length) {
-                thumbnail.addEventListener('click', function() {
-                    featuredMember.src = this.src;
-                    memberName.textContent = teamMembers[index].name;
-                    memberTitle.textContent = teamMembers[index].title;
-                });
-            }
+    // Thumbnail click handlers
+    thumbnails.forEach(thumbnail => {
+        thumbnail.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent the background click from firing
+            const index = parseInt(this.getAttribute('data-index'));
+            updateMember(index);
         });
+    });
+    
+    // Scrolling background text animation
+    function updateScrollingName() {
+    const currentName = teamMembers[currentMemberIndex].name;
+    let repeatedName = '';
+    
+    // Repeat the name many more times to ensure continuous scrolling
+    for (let i = 0; i < 50; i++) {  // Increased from 20 to 50
+        repeatedName += currentName + ' ';
     }
+    
+    scrollingName.textContent = repeatedName;
+    animateScrollingName();
+}
+function animateScrollingName() {
+    let position = -400; // Start more to the left
+    const scrollSpeed = 1;
+    
+    function step() {
+        position -= scrollSpeed;
+        scrollingName.style.transform = `translateY(-50%) translateX(${position}px)`;
+        requestAnimationFrame(step);
+    }
+    
+    requestAnimationFrame(step);
+}
+    // Navigation functions
+    function nextMember() {
+        let newIndex = currentMemberIndex + 1;
+        if (newIndex >= teamMembers.length) {
+            newIndex = 0;
+        }
+        updateMember(newIndex);
+    }
+    
+    function prevMember() {
+        let newIndex = currentMemberIndex - 1;
+        if (newIndex < 0) {
+            newIndex = teamMembers.length - 1;
+        }
+        updateMember(newIndex);
+    }
+    
+    function updateMember(index) {
+        // Update active thumbnail
+        thumbnails.forEach(thumb => thumb.classList.remove('active'));
+        thumbnails[index].classList.add('active');
+        
+        // Update featured member
+        currentMemberIndex = index;
+        featuredMemberImg.src = teamMembers[index].image;
+        memberName.textContent = teamMembers[index].name;
+        memberTitle.textContent = teamMembers[index].title;
+        
+        // Update scrolling name
+        updateScrollingName();
+    }
+    
+    // Initialize first member as active
+    thumbnails[0].classList.add('active');
 });
     </script>
 </body>
