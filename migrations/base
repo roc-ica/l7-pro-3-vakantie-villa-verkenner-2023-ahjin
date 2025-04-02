@@ -1,0 +1,77 @@
+-- Database Creation Script for VillaVerkenner Application
+-- Usage: Import this script in phpMyAdmin
+
+-- Villas Table
+CREATE TABLE IF NOT EXISTS villas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    straat VARCHAR(255) NOT NULL,
+    post_c VARCHAR(20) NOT NULL,
+    kamers SMALLINT NOT NULL,
+    badkamers SMALLINT NOT NULL,
+    slaapkamers SMALLINT NOT NULL,
+    oppervlakte DECIMAL(10,2) NOT NULL,
+    prijs INT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Labels Table
+CREATE TABLE IF NOT EXISTS labels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    naam VARCHAR(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Villa Labels Junction Table
+CREATE TABLE IF NOT EXISTS villa_labels (
+    villa_id INT NOT NULL,
+    label_id INT NOT NULL,
+    PRIMARY KEY (villa_id, label_id),
+    FOREIGN KEY (villa_id) REFERENCES villas(id) ON DELETE CASCADE,
+    FOREIGN KEY (label_id) REFERENCES labels(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Villa Images Table
+CREATE TABLE IF NOT EXISTS villa_images (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    villa_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    FOREIGN KEY (villa_id) REFERENCES villas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tickets Table
+CREATE TABLE IF NOT EXISTS tickets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    naam VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    bericht TEXT NOT NULL,
+    status TINYINT NOT NULL CHECK (status IN (0, 1, 2)),
+    prioriteit TINYINT NOT NULL CHECK (prioriteit IN (0, 1, 2)),
+    datum VARCHAR(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Formulieren (Forms) Table
+CREATE TABLE IF NOT EXISTS formulieren (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    naam VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    telefoon VARCHAR(50) NOT NULL,
+    datum VARCHAR(50) NOT NULL,
+    bericht TEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ticket Formulieren Junction Table
+CREATE TABLE IF NOT EXISTS ticket_formulieren (
+    ticket_id INT NOT NULL,
+    formulier_id INT NOT NULL,
+    PRIMARY KEY (ticket_id, formulier_id),
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+    FOREIGN KEY (formulier_id) REFERENCES formulieren(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Analytics Table
+CREATE TABLE IF NOT EXISTS analytics (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    datum VARCHAR(50) NOT NULL,
+    ip_adres VARCHAR(45) NOT NULL,
+    pagina VARCHAR(255) NOT NULL,
+    query TEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
