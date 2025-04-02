@@ -23,18 +23,25 @@ class Database {
 
     private function connect() {
         try {
+            // Check if the driver is available
+            if (!in_array('mysql', PDO::getAvailableDrivers())) {
+                throw new PDOException("MySQL PDO driver is not installed or enabled");
+            }
+
             $conn = new PDO(
                 $this->dsn,
                 $this->username,
                 $this->password,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset}"]
+                    ]
             );
             return $conn;
         } catch (PDOException $e) {
-            // Error handling without ServerLogger
+            // More detailed error handling
+            error_log("Database connection failed: " . $e->getMessage());
             echo "Database connection failed: " . $e->getMessage();
+            return null;
         }
     }
 
