@@ -8,21 +8,21 @@
 </head>
 <body>
 <header class="site-header">
-    <div class="header-container">
-        <a href="/" class="logo">
-            <img src="/assets/img/logo.png" alt="Villa Verkenner Logo" class="logo-image">
-        </a>
-        <nav class="main-nav">
-            <ul>
-                <li><a href="/" class="nav-link">Home</a></li>
-                <li><a href="/pages/woningen.php" class="nav-link">Woningen</a></li>
-                <li><a href="/pages/about.php" class="nav-link">Over ons</a></li>
-                <li><a href="/pages/contact.php" class="nav-link">Contact</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            <a href="/pages/login.php" class="login-button">Inloggen</a>
-        </div>
+    <div class="navbar-container">
+            <div class="navbar">
+                <div class="logo">
+                    <a href="#"><img src="../../assets/img/logo.png" alt="Vakantie Villas Logo"></a>
+                </div>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#">Woningen</a></li>
+                        <li><a href="#">Ons</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#" class="register-btn">Register</a></li>
+                        <li><a href="#" class="login-btn">Login</a></li>
+                    </ul>
+                </nav>
+            </div>
     </div>
 </header>
 </body>
