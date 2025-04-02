@@ -7,11 +7,11 @@ $dotenv->load();
 // Database connection test
 try {
     // Get MySQL connection details from environment
-    $host = $_ENV['servername'] ?? 'mysql';
-    $database = $_ENV['database'] ?? 'villa_verkenner';
-    $username = $_ENV['username'] ?? 'villa_user';
-    $password = $_ENV['password'] ?? 'securepassword';
-    $charset = $_ENV['charset'] ?? 'utf8mb4';
+    $host = $_ENV['servername'];
+    $database = $_ENV['database'];
+    $username = $_ENV['username'];
+    $password = $_ENV['password'];
+    $charset = $_ENV['charset'];
     
     // Create PDO connection to MySQL
     $dsn = "mysql:host=$host;dbname=$database;charset=$charset";

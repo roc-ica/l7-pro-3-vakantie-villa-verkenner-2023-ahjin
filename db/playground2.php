@@ -8,7 +8,7 @@ ini_set('display_errors', 1);
 
 // Admin credentials - change these to your preferred values
 $username = 'admint';
-$password = password_hash('admin123', PASSWORD_DEFAULT); // Hash the password
+$password = password_hash('password', PASSWORD_DEFAULT); // Hash the password
 $created_at = date('Y-m-d H:i:s');
 $session_id = ''; // Initial empty session_id
 
