@@ -6,6 +6,7 @@ docker-compose.override.yml
 # PHP
 vendor/
 composer.lock
+composer.phar
 
 # Database
 db/*.sqlite
