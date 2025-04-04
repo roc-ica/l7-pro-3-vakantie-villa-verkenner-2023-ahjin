@@ -16,7 +16,7 @@
 
         <div class="hero-content-wrapper">
             <div class="hero-content">
-                <h1>Wij zijn <br><span class="highlight">Vakantie</span><br>Villas</h1>
+                <h1>Wij zijn <br><span class="highlight">Vakantie</span><br><span class="highlight">Villas</span></h1>
                 <p>Dé specialist in luxe vakantiewoningen. Vind jouw droomverblijf in IJsland en ervaar de magie van dit unieke land!</p>
             </div>
             <div class="hero-image">
