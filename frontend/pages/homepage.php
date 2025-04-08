@@ -20,7 +20,7 @@
         <div class="banner-content">
             <h1>Ontdek de schoonheid van IJsland</h1>
             <p>Luxe vakantievilla's te midden van adembenemende landschappen</p>
-            <a href="/pages/woningen.php" class="cta-button">Bekijk alle villa's</a>
+            <a href="woningen.php" class="cta-button">Bekijk alle villa's</a>
         </div>
     </section>
 
@@ -45,7 +45,7 @@
                         <span>3 badkamers</span>
                         <span>250m²</span>
                     </div>
-                    <a href="/pages/woningen.php" class="more-info">Meer informatie</a>
+                    <a href="woningen.php" class="more-info">Meer informatie</a>
                 </div>
             </div>
             
@@ -62,7 +62,7 @@
                         <span>2 badkamers</span>
                         <span>180m²</span>
                     </div>
-                    <a href="/pages/woningen.php" class="more-info">Meer informatie</a>
+                    <a href="woningen.php" class="more-info">Meer informatie</a>
                 </div>
             </div>
             
@@ -79,7 +79,7 @@
                         <span>4 badkamers</span>
                         <span>320m²</span>
                     </div>
-                    <a href="/pages/woningen.php" class="more-info">Meer informatie</a>
+                    <a href="woningen.php" class="more-info">Meer informatie</a>
                 </div>
             </div>
         </div>
@@ -93,7 +93,7 @@
             <p>Verken de vele luxe villa's die we u kunnen aanbieden in het land van vuur en ijs. 
             Geniet van het noorderlicht vanuit uw eigen jacuzzi of word wakker met uitzicht op gletsjers en vulkanen. 
             Laat ons u helpen de perfecte accommodatie te vinden voor uw IJslandse avontuur.</p>
-            <a href="/pages/woningen.php" class="explore-button">Ontdekken</a>
+            <a href="woningen.php" class="explore-button">Ontdekken</a>
         </div>
     </section>
 

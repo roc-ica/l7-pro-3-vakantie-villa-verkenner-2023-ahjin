@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real Estate Website</title>
     <link rel="stylesheet" href="../styles/woningen.css">
-    <link rel="stylesheet" href="../includes/head.css">
+    <link rel="stylesheet" href="../includes/header.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="../includes/script.js" defer></script>
 </head>
