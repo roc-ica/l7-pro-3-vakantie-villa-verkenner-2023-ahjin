@@ -48,7 +48,6 @@
             </div>
             <a href="mailto:support@ilvastgoed.com">support@ilvastgoed.com</a>
             <a href="mailto:contact@ilvastgoed.com">contact@ilvastgoed.com</a>
-            <hr>
             <!-- New form starts here -->
             <div class="form-container">
                 <form action="https://api.web3forms.com/submit" method="POST">
