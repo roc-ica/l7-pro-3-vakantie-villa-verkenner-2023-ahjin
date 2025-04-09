@@ -1,11 +1,28 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 include 'components/header.php';
 include_once '../../db/class/database.php';
-include_once '../../db/class/filter.php'; // Include Filter class
 
-$db = new Database();
-$conn = $db->getConnection();
-$filter = new Filter(); // Instantiate Filter class
+// Check if Database class exists
+if (!class_exists('Database')) {
+    die("Database class not found. Check the path to database.php");
+}
+
+// Try to create database connection with error handling
+try {
+    $db = new Database();
+    $conn = $db->getConnection();
+    
+    // Check if connection was successful
+    if (!$conn) {
+        throw new Exception("Database connection failed. Check your database credentials and server status.");
+    }
+} catch (Exception $e) {
+    die("Database Error: " . $e->getMessage());
+}
 
 // Controleer of een villa ID is opgegeven
 if (!isset($_GET['id']) || empty($_GET['id'])) {
@@ -14,74 +31,80 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id = $_GET['id'];
 
-// Villa ophalen
-$stmt = $conn->prepare("SELECT * FROM villas WHERE id = :id");
-$stmt->execute(['id' => $id]);
-$villa = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    // Villa ophalen
+    $stmt = $conn->prepare("SELECT * FROM villas WHERE id = :id");
+    $stmt->execute(['id' => $id]);
+    $villa = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$villa) {
-    die("Villa niet gevonden.");
-}
+    if (!$villa) {
+        die("Villa niet gevonden.");
+    }
 
-// Huidige labels van de villa ophalen
-$stmtCurrentLabels = $conn->prepare("SELECT label_id FROM villa_labels WHERE villa_id = :villa_id");
-$stmtCurrentLabels->execute(['villa_id' => $id]);
-$currentLabelIds = $stmtCurrentLabels->fetchAll(PDO::FETCH_COLUMN);
+    // Check if featured column exists
+    $columns = $conn->query("SHOW COLUMNS FROM villas LIKE 'featured'")->fetchAll();
+    $featuredExists = !empty($columns);
+    
+    // If featured column doesn't exist, add it
+    if (!$featuredExists) {
+        $conn->exec("ALTER TABLE villas ADD COLUMN featured TINYINT DEFAULT 0");
+        // Set default value for this villa
+        $villa['featured'] = 0;
+    }
 
-// Alle beschikbare labels ophalen
-$availableLabels = $filter->getAvailableLabels();
-
-// Villa bijwerken
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    try {
-        $conn->beginTransaction();
-
-        // Stap 1: Basis villa gegevens bijwerken
-        $stmt = $conn->prepare("UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
-                                badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, prijs = :prijs 
-                                WHERE id = :id");
-        $stmt->execute([
-            'id' => $id,
-            'straat' => $_POST['straat'],
-            'post_c' => $_POST['post_c'],
-            'kamers' => $_POST['kamers'],
-            'badkamers' => $_POST['badkamers'],
-            'slaapkamers' => $_POST['slaapkamers'],
-            'oppervlakte' => $_POST['oppervlakte'],
-            'prijs' => $_POST['prijs']
-        ]);
-
-        // Stap 2: Labels bijwerken (verwijder oude, voeg nieuwe toe)
-        $stmtDeleteLabels = $conn->prepare("DELETE FROM villa_labels WHERE villa_id = :villa_id");
-        $stmtDeleteLabels->execute(['villa_id' => $id]);
-
-        if (!empty($_POST['labels']) && is_array($_POST['labels'])) {
-            $stmtInsertLabel = $conn->prepare("INSERT INTO villa_labels (villa_id, label_id) VALUES (:villa_id, :label_id)");
-            foreach ($_POST['labels'] as $labelId) {
-                if (!empty($labelId)) { // Ensure label ID is not empty
-                    $stmtInsertLabel->execute(['villa_id' => $id, 'label_id' => $labelId]);
-                }
-            }
-        }
+    // Villa bijwerken
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $featured = isset($_POST['featured']) ? 1 : 0;
         
-        // Note: Image update logic is not included here, add if needed.
+        // Prepare the SQL based on whether featured column exists
+        if ($featuredExists) {
+            $sql = "UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
+                    badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, 
+                    prijs = :prijs, featured = :featured 
+                    WHERE id = :id";
+            $params = [
+                'id' => $id,
+                'straat' => $_POST['straat'],
+                'post_c' => $_POST['post_c'],
+                'kamers' => $_POST['kamers'],
+                'badkamers' => $_POST['badkamers'],
+                'slaapkamers' => $_POST['slaapkamers'],
+                'oppervlakte' => $_POST['oppervlakte'],
+                'prijs' => $_POST['prijs'],
+                'featured' => $featured
+            ];
+        } else {
+            $sql = "UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
+                    badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, 
+                    prijs = :prijs 
+                    WHERE id = :id";
+            $params = [
+                'id' => $id,
+                'straat' => $_POST['straat'],
+                'post_c' => $_POST['post_c'],
+                'kamers' => $_POST['kamers'],
+                'badkamers' => $_POST['badkamers'],
+                'slaapkamers' => $_POST['slaapkamers'],
+                'oppervlakte' => $_POST['oppervlakte'],
+                'prijs' => $_POST['prijs']
+            ];
+        }
 
-        $conn->commit();
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+
         header("Location: villas.php");
         exit();
-    } catch (Exception $e) {
-        $conn->rollBack();
-        echo "Fout bij het bijwerken van villa: " . $e->getMessage();
-        // Consider more robust error handling/logging
     }
+
+    // Afbeelding ophalen
+    $stmt = $conn->prepare("SELECT image_path FROM villa_images WHERE villa_id = :villa_id LIMIT 1");
+    $stmt->execute(['villa_id' => $id]);
+    $image = $stmt->fetch(PDO::FETCH_ASSOC);
+    $imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg'; // Gebruik placeholder als er geen afbeelding is
+} catch (PDOException $e) {
+    die("Database Error: " . $e->getMessage());
 }
-
-// Afbeelding ophalen
-$stmt = $conn->prepare("SELECT image_path FROM villa_images WHERE villa_id = :villa_id LIMIT 1");
-$stmt->execute(['villa_id' => $id]);
-$image = $stmt->fetch(PDO::FETCH_ASSOC);
-$imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg'; // Gebruik placeholder als er geen afbeelding is
-
 ?>
 
 <!DOCTYPE html>
@@ -137,24 +160,43 @@ $imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg'; // Gebruik
                     <input type="number" name="prijs" id="prijs" required value="<?= $villa['prijs'] ?>">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Labels</label>
-                <div class="labels-checkbox-group">
-                    <?php foreach ($availableLabels as $label): ?>
-                        <label class="label-checkbox">
-                            <input type="checkbox" name="labels[]" value="<?= $label['id'] ?>" <?= in_array($label['id'], $currentLabelIds) ? 'checked' : '' ?>>
-                            <?= htmlspecialchars($label['naam']) ?>
-                        </label>
-                    <?php endforeach; ?>
-                     <?php if (empty($availableLabels)): ?>
-                        <p>Geen labels beschikbaar.</p>
-                    <?php endif; ?>
-                </div>
+            <?php if ($featuredExists): ?>
+            <div class="form-group checkbox-group">
+                <input type="checkbox" name="featured" id="featured" <?= $villa['featured'] ? 'checked' : '' ?>>
+                <label for="featured">Uitgelichte villa (tonen op homepage)</label>
             </div>
-            <button type="submit" class="submit-btn">Opslaan</button>
+            <?php endif; ?>
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Opslaan</button>
+                <a href="villas.php" class="cancel-btn">Annuleren</a>
+            </div>
         </form>
     </div>
 </div>
+
+<style>
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.cancel-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    text-align: center;
+}
+
+.cancel-btn:hover {
+    background-color: #e0e0e0;
+}
+</style>
 
 </body>
 </html>

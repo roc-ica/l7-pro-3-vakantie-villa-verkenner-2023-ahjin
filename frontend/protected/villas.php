@@ -14,14 +14,33 @@ try {
         throw new Exception("Database connection failed. Please check the server configuration.");
     }
     
+    // Toggle featured status
+    if (isset($_GET['toggle_featured'])) {
+        $villaId = $_GET['toggle_featured'];
+        
+        // Get current featured status
+        $stmt = $conn->prepare("SELECT featured FROM villas WHERE id = :id");
+        $stmt->execute(['id' => $villaId]);
+        $currentStatus = $stmt->fetchColumn();
+        
+        // Toggle status
+        $newStatus = $currentStatus ? 0 : 1;
+        $stmt = $conn->prepare("UPDATE villas SET featured = :featured WHERE id = :id");
+        $stmt->execute(['featured' => $newStatus, 'id' => $villaId]);
+        
+        header("Location: villas.php");
+        exit();
+    }
+    
     // Villa toevoegen
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['straat'])) {
         try {
             $conn->beginTransaction();
 
             // Stap 1: Villa opslaan
-            $stmt = $conn->prepare("INSERT INTO villas (straat, post_c, kamers, badkamers, slaapkamers, oppervlakte, prijs) 
-                                   VALUES (:straat, :post_c, :kamers, :badkamers, :slaapkamers, :oppervlakte, :prijs)");
+            $featured = isset($_POST['featured']) ? 1 : 0;
+            $stmt = $conn->prepare("INSERT INTO villas (straat, post_c, kamers, badkamers, slaapkamers, oppervlakte, prijs, featured) 
+                                   VALUES (:straat, :post_c, :kamers, :badkamers, :slaapkamers, :oppervlakte, :prijs, :featured)");
             $stmt->execute([
                 'straat' => $_POST['straat'],
                 'post_c' => $_POST['post_c'],
@@ -29,7 +48,8 @@ try {
                 'badkamers' => $_POST['badkamers'],
                 'slaapkamers' => $_POST['slaapkamers'],
                 'oppervlakte' => $_POST['oppervlakte'],
-                'prijs' => $_POST['prijs']
+                'prijs' => $_POST['prijs'],
+                'featured' => $featured
             ]);
             $villaId = $conn->lastInsertId();
 
@@ -89,6 +109,30 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Villa Admin Panel</title>
     <link rel="stylesheet" href="../protected/styles/villas.css">
+    <style>
+        .featured-badge {
+            background-color: #00a3a3;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .toggle-featured {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+        .toggle-featured:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
 </head>
 <body>
 
@@ -129,6 +173,10 @@ try {
                 <label for="prijs">Prijs (€)</label>
                 <input type="number" name="prijs" id="prijs" required>
             </div>
+            <div class="form-group checkbox-group">
+                <input type="checkbox" name="featured" id="featured">
+                <label for="featured">Uitgelichte villa (tonen op homepage)</label>
+            </div>
             <div class="form-group">
                 <label for="villa_image">Afbeelding uploaden</label>
                 <input type="file" name="villa_image" id="villa_image" accept="image/*">
@@ -162,6 +210,9 @@ try {
                     $imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg';
                     ?>
                     <img src="<?= htmlspecialchars($imagePath) ?>" alt="Villa Afbeelding">
+                    <?php if ($villa['featured']): ?>
+                        <span class="featured-badge">Uitgelicht</span>
+                    <?php endif; ?>
                 </div>
                 <div class="villa-info">
                     <h3><?= htmlspecialchars($villa['straat']) ?></h3>
@@ -183,6 +234,9 @@ try {
                         ?>
                     </p>
                     <div class="villa-actions">
+                        <a href="?toggle_featured=<?= $villa['id'] ?>" class="toggle-featured">
+                            <?= $villa['featured'] ? 'Verwijder uitlichting' : 'Maak uitgelicht' ?>
+                        </a>
                         <a href="edit_villa.php?id=<?= $villa['id'] ?>" class="action-btn edit-btn">Bewerken</a>
                         <a href="?delete=<?= $villa['id'] ?>" class="action-btn delete-btn" id="deleteLink">Verwijderen</a>
                     </div>
@@ -232,7 +286,6 @@ try {
     confirmDelete.onclick = function() {
         window.location.href = deleteLink.href; // Redirect to the delete URL
     }
-
 </script>
 </body>
 </html>
