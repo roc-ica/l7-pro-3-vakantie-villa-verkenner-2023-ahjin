@@ -56,6 +56,107 @@ body {
     color: #2c3e50;
 }
 
+/* --- Form Styling --- */
+.villa-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two column layout */
+    gap: 20px 30px; /* Row gap, Column gap */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Span image upload and labels across both columns */
+.form-group:has(#villa_image),
+.form-group:has(.labels-checkbox-group) {
+     grid-column: 1 / -1;
+}
+
+.villa-form label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.villa-form input[type="text"],
+.villa-form input[type="number"],
+.villa-form input[type="file"] {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    width: 100%; /* Ensure inputs fill the grid column */
+    transition: border-color 0.3s;
+}
+
+.villa-form input[type="file"] {
+    padding: 8px; /* Adjust padding for file input */
+     border: 1px dashed #ccc; /* Different border for file input */
+     background-color: #f9f9f9;
+     cursor: pointer;
+}
+
+.villa-form input[type="text"]:focus,
+.villa-form input[type="number"]:focus {
+    border-color: #3498db; /* Highlight on focus */
+    outline: none;
+}
+
+/* Labels Checkbox Group Styling */
+.labels-checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
+    gap: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+
+.label-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #333;
+    cursor: pointer;
+}
+
+.label-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.label-checkbox p { /* Styling for 'Geen labels beschikbaar' message */
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #777;
+}
+
+/* Submit Button */
+.submit-btn {
+    grid-column: 1 / -1; /* Span button across columns */
+    padding: 12px 20px;
+    background-color: #2ecc71; /* Green color */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px; /* Space above button */
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    background-color: #27ae60; /* Darker green */
+}
+
 /* En de rest van je CSS hieronder... */
 
 /* Responsieve stijlen */
@@ -125,6 +226,22 @@ body {
     .admin-actions {
         flex-direction: column;
     }
+
+    .villa-form {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+        gap: 15px; /* Adjust gap */
+    }
+
+    /* Reset column span for single column layout */
+     .form-group:has(#villa_image),
+     .form-group:has(.labels-checkbox-group),
+     .submit-btn {
+         grid-column: auto;
+     }
+
+     .labels-checkbox-group {
+         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Adjust for smaller screens */
+     }
 }
 
 .villa-grid {

@@ -45,6 +45,7 @@ nav a:hover {
     display: flex;
     padding: 20px;
     gap: 20px;
+    background-color: #f0f4f8;
 }
 
 aside.filters {
@@ -249,29 +250,101 @@ footer {
 }
 
 .footer-column img {
-    height: 20px;
-    margin-right: 5px;
-    vertical-align: middle;
+    height: 30px; /* Adjusted if necessary */
+    margin-top: 10px;
 }
 
+/* Responsive Design Adjustments */
 @media (max-width: 768px) {
     .container {
         flex-direction: column;
+        padding: 10px; /* Adjust padding */
     }
 
     aside.filters {
-        width: 100%;
-        margin-bottom: 20px;
+        width: 100%; /* Take full width */
+        margin-bottom: 20px; /* Add space below filters */
+        padding: 15px; /* Adjust padding */
+        box-sizing: border-box; /* Include padding in width calculation */
+    }
+
+    .search-bar input {
+        width: calc(100% - 22px); /* Full width minus padding/border */
+        box-sizing: border-box;
     }
 
     main.properties-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Slightly smaller min width */
     }
 
     .footer-columns {
         flex-direction: column;
-        gap: 20px;
+        text-align: center; /* Center text in columns */
     }
+
+    .footer-column {
+        margin-bottom: 20px; /* Add space between stacked footer columns */
+    }
+    .footer-column:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 5px; /* Further reduce padding */
+    }
+
+    aside.filters {
+        padding: 10px; /* Further reduce padding */
+    }
+
+    .filter-section h3 {
+        font-size: 1.1em; /* Adjust heading size */
+    }
+
+     .filter-section h4 {
+        font-size: 1em; /* Adjust heading size */
+    }
+
+    main.properties-grid {
+        grid-template-columns: 1fr; /* Force single column */
+        gap: 15px; /* Reduce gap */
+    }
+
+     .property-card h3 {
+        font-size: 1.1em; /* Adjust card heading size */
+        margin: 10px;
+    }
+
+     .property-card p.price,
+     .property-card p.size {
+        font-size: 0.9em; /* Adjust text size */
+        margin: 0 10px 10px 10px;
+    }
+
+     .property-card .tags {
+         margin: 0 10px 10px 10px;
+     }
+
+     .property-card .tag {
+        font-size: 0.75em; /* Adjust tag size */
+        padding: 4px 8px;
+     }
+
+     .property-card a.view-more {
+        font-size: 0.9em; /* Adjust link size */
+        margin: 0 10px 15px 10px;
+     }
+
+    .pagination button {
+        padding: 6px 10px; /* Adjust pagination button size */
+    }
+
+    .pagination span {
+        font-size: 0.9em; /* Adjust pagination text size */
+    }
+
 }
 
 .price-range {
@@ -305,4 +378,215 @@ input[type="range"]::-webkit-slider-thumb {
     background: #007bff;
     border-radius: 50%;
     cursor: pointer;
+}
+
+/* Override Header styles for woningen.php */
+.header-container .hero {
+    min-height: auto; /* Remove the large minimum height */
+    background-color: transparent; /* Make hero background transparent */
+    overflow: visible; /* Reset overflow */
+    margin-bottom: 20px; /* Add some space below the header */
+}
+
+.header-container .navbar-container {
+    position: static; /* Override absolute positioning */
+    padding: 0; /* Reset padding */
+    /* The navbar itself might need margin adjustments if static positioning changes things */
+}
+
+.header-container .navbar {
+    /* Optional: Adjust margins if needed after position change */
+     margin: 10px auto; /* Center navbar with some vertical margin */
+}
+
+/* --- Filter Styling Enhancements --- */
+
+aside.filters {
+    /* background-color: #fff; */ /* Optional: White background for filters */
+    /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); */ /* Optional: Subtle shadow */
+    border: 1px solid #e0e4e8; /* Lighter border */
+    padding: 25px; /* Slightly more padding */
+}
+
+.search-bar {
+    display: flex; /* Align input and button */
+    gap: 5px; /* Space between input and button */
+    margin-bottom: 25px;
+}
+
+.search-bar input {
+    flex-grow: 1; /* Input takes available space */
+    margin-bottom: 0; /* Remove default margin */
+}
+
+.search-button, .filter-submit-btn, .filter-reset-btn {
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+    white-space: nowrap; /* Prevent buttons breaking line */
+}
+
+.search-button, .filter-submit-btn {
+    background-color: #00a3a3; /* Teal */
+    color: #fff;
+}
+
+.search-button:hover, .filter-submit-btn:hover {
+    background-color: #007a7a; /* Darker Teal */
+}
+
+.filter-reset-btn {
+    background-color: #f0f4f8; /* Light background */
+    color: #555;
+    border: 1px solid #ddd;
+    text-decoration: none; /* Remove underline from link */
+    display: inline-block; /* Proper alignment */
+     margin-top: 15px; /* Space above reset button */
+     text-align: center; /* Center text if it wraps */
+}
+
+.filter-reset-btn:hover {
+    background-color: #e0e4e8;
+    color: #333;
+}
+
+.filter-section h3 {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e4e8;
+    padding-bottom: 10px;
+}
+
+.filter-section h4 {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    color: #007a7a; /* Teal for subheadings */
+}
+
+aside.filters ul {
+    margin-bottom: 20px; /* Space below checkbox lists */
+}
+
+aside.filters li {
+    margin-bottom: 12px; /* Slightly more space between checkboxes */
+}
+
+aside.filters label {
+    cursor: pointer;
+}
+
+/* Slider Refinements */
+.price-range .slider-container,
+.area-range .slider-container {
+    margin-top: 10px; /* Space above sliders */
+    display: flex; /* Arrange sliders side-by-side if needed for complex slider */
+    gap: 10px;
+}
+
+.price-range span,
+.area-range span {
+    display: block; /* Ensure spans are block for spacing */
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+input[type="range"] {
+    height: 8px;
+    background: #e0e4e8; /* Lighter track */
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    width: 18px;
+    height: 18px;
+    background: #00a3a3; /* Teal thumb */
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #00a3a3;
+    border: none;
+    border-radius: 50%;
+}
+
+/* Stepper Refinements */
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between elements */
+    margin-bottom: 15px; /* Space between steppers */
+}
+
+.stepper button {
+    background-color: #e0e4e8; /* Light background */
+    color: #333;
+    border: 1px solid #ccc;
+    width: 28px; /* Fixed width */
+    height: 28px; /* Fixed height */
+    border-radius: 50%; /* Circular buttons */
+    font-size: 1em;
+    font-weight: bold;
+    line-height: 26px; /* Center symbol vertically */
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.stepper button:hover {
+    background-color: #d0d4d8;
+}
+
+.stepper input[type="number"] {
+    width: 40px; /* Adjust width as needed */
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    font-weight: 500;
+    /* Remove spinners */
+    -moz-appearance: textfield;
+}
+
+.stepper input[type="number"]::-webkit-outer-spin-button,
+.stepper input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Property Card Enhancements */
+.property-card {
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    transition: box-shadow 0.3s ease;
+    border: 1px solid #e0e4e8; /* Subtle border */
+}
+
+.property-card:hover {
+     box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+}
+
+.property-card h3 {
+     color: #007a7a; /* Match filter subheading color */
+}
+
+.property-card .tag {
+     background-color: #e0f2f1; /* Lighter teal background */
+     color: #007a7a; /* Darker teal text */
+     font-weight: 500;
+}
+
+.property-card a.view-more {
+     font-weight: 600;
+}
+
+.no-results {
+    grid-column: 1 / -1; /* Span all columns */
+    text-align: center;
+    padding: 40px 20px;
+    color: #555;
+    font-size: 1.1em;
 }

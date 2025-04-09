@@ -1,7 +1,11 @@
 <?php
 include 'components/header.php';
 include_once '../../db/class/database.php';
-$conn = (new Database())->getConnection();
+include_once '../../db/class/filter.php'; // Include Filter class
+
+$db = new Database();
+$conn = $db->getConnection();
+$filter = new Filter(); // Instantiate Filter class
 
 // Controleer of een villa ID is opgegeven
 if (!isset($_GET['id']) || empty($_GET['id'])) {
@@ -19,25 +23,57 @@ if (!$villa) {
     die("Villa niet gevonden.");
 }
 
+// Huidige labels van de villa ophalen
+$stmtCurrentLabels = $conn->prepare("SELECT label_id FROM villa_labels WHERE villa_id = :villa_id");
+$stmtCurrentLabels->execute(['villa_id' => $id]);
+$currentLabelIds = $stmtCurrentLabels->fetchAll(PDO::FETCH_COLUMN);
+
+// Alle beschikbare labels ophalen
+$availableLabels = $filter->getAvailableLabels();
+
 // Villa bijwerken
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $stmt = $conn->prepare("UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
-                            badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, prijs = :prijs 
-                            WHERE id = :id");
+    try {
+        $conn->beginTransaction();
 
-    $stmt->execute([
-        'id' => $id,
-        'straat' => $_POST['straat'],
-        'post_c' => $_POST['post_c'],
-        'kamers' => $_POST['kamers'],
-        'badkamers' => $_POST['badkamers'],
-        'slaapkamers' => $_POST['slaapkamers'],
-        'oppervlakte' => $_POST['oppervlakte'],
-        'prijs' => $_POST['prijs']
-    ]);
+        // Stap 1: Basis villa gegevens bijwerken
+        $stmt = $conn->prepare("UPDATE villas SET straat = :straat, post_c = :post_c, kamers = :kamers, 
+                                badkamers = :badkamers, slaapkamers = :slaapkamers, oppervlakte = :oppervlakte, prijs = :prijs 
+                                WHERE id = :id");
+        $stmt->execute([
+            'id' => $id,
+            'straat' => $_POST['straat'],
+            'post_c' => $_POST['post_c'],
+            'kamers' => $_POST['kamers'],
+            'badkamers' => $_POST['badkamers'],
+            'slaapkamers' => $_POST['slaapkamers'],
+            'oppervlakte' => $_POST['oppervlakte'],
+            'prijs' => $_POST['prijs']
+        ]);
 
-    header("Location: villas.php");
-    exit();
+        // Stap 2: Labels bijwerken (verwijder oude, voeg nieuwe toe)
+        $stmtDeleteLabels = $conn->prepare("DELETE FROM villa_labels WHERE villa_id = :villa_id");
+        $stmtDeleteLabels->execute(['villa_id' => $id]);
+
+        if (!empty($_POST['labels']) && is_array($_POST['labels'])) {
+            $stmtInsertLabel = $conn->prepare("INSERT INTO villa_labels (villa_id, label_id) VALUES (:villa_id, :label_id)");
+            foreach ($_POST['labels'] as $labelId) {
+                if (!empty($labelId)) { // Ensure label ID is not empty
+                    $stmtInsertLabel->execute(['villa_id' => $id, 'label_id' => $labelId]);
+                }
+            }
+        }
+        
+        // Note: Image update logic is not included here, add if needed.
+
+        $conn->commit();
+        header("Location: villas.php");
+        exit();
+    } catch (Exception $e) {
+        $conn->rollBack();
+        echo "Fout bij het bijwerken van villa: " . $e->getMessage();
+        // Consider more robust error handling/logging
+    }
 }
 
 // Afbeelding ophalen
@@ -99,6 +135,20 @@ $imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg'; // Gebruik
                 <div class="form-group half">
                     <label for="prijs">Prijs (€)</label>
                     <input type="number" name="prijs" id="prijs" required value="<?= $villa['prijs'] ?>">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Labels</label>
+                <div class="labels-checkbox-group">
+                    <?php foreach ($availableLabels as $label): ?>
+                        <label class="label-checkbox">
+                            <input type="checkbox" name="labels[]" value="<?= $label['id'] ?>" <?= in_array($label['id'], $currentLabelIds) ? 'checked' : '' ?>>
+                            <?= htmlspecialchars($label['naam']) ?>
+                        </label>
+                    <?php endforeach; ?>
+                     <?php if (empty($availableLabels)): ?>
+                        <p>Geen labels beschikbaar.</p>
+                    <?php endif; ?>
                 </div>
             </div>
             <button type="submit" class="submit-btn">Opslaan</button>

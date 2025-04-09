@@ -1,11 +1,14 @@
 <?php
 include 'components/header.php';
 include_once '../../db/class/database.php';
+include_once '../../db/class/filter.php'; // Include Filter class to get labels
 
 // Improve error handling for database connection
 try {
     $db = new Database();
     $conn = $db->getConnection();
+    $filter = new Filter(); // Instantiate Filter class
+    $availableLabels = $filter->getAvailableLabels(); // Fetch labels
     
     if (!$conn) {
         throw new Exception("Database connection failed. Please check the server configuration.");
@@ -30,7 +33,15 @@ try {
             ]);
             $villaId = $conn->lastInsertId();
 
-            // Stap 2: Afbeelding uploaden
+            // Stap 2: Labels opslaan (if any selected)
+            if (!empty($_POST['labels']) && is_array($_POST['labels'])) {
+                 $stmtLabel = $conn->prepare("INSERT INTO villa_labels (villa_id, label_id) VALUES (:villa_id, :label_id)");
+                 foreach ($_POST['labels'] as $labelId) {
+                     $stmtLabel->execute(['villa_id' => $villaId, 'label_id' => $labelId]);
+                 }
+            }
+
+            // Stap 3: Afbeelding uploaden
             if (!empty($_FILES['villa_image']['name'])) {
                 $targetDir = "../uploads/";
                 if (!is_dir($targetDir)) {
@@ -122,6 +133,20 @@ try {
                 <label for="villa_image">Afbeelding uploaden</label>
                 <input type="file" name="villa_image" id="villa_image" accept="image/*">
             </div>
+            <div class="form-group">
+                <label>Labels</label>
+                <div class="labels-checkbox-group">
+                    <?php foreach ($availableLabels as $label): ?>
+                        <label class="label-checkbox">
+                            <input type="checkbox" name="labels[]" value="<?= $label['id'] ?>">
+                            <?= htmlspecialchars($label['naam']) ?>
+                        </label>
+                    <?php endforeach; ?>
+                     <?php if (empty($availableLabels)): ?>
+                        <p>Geen labels beschikbaar. Voeg eerst labels toe in de database.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
             <button type="submit" class="submit-btn">Toevoegen</button>
         </form>
     </div>
@@ -143,6 +168,20 @@ try {
                     <p><?= htmlspecialchars($villa['post_c']) ?></p>
                     <p><?= $villa['kamers'] ?> Kamers - <?= $villa['badkamers'] ?> Badkamers - <?= $villa['slaapkamers'] ?> Slaapkamers</p>
                     <p><?= $villa['oppervlakte'] ?> m² - €<?= number_format($villa['prijs'], 0, ',', '.') ?></p>
+                    <p class="villa-tags"><strong>Labels:</strong> 
+                        <?php 
+                        // Fetch and display labels for this villa
+                        $stmtLabels = $conn->prepare(
+                            "SELECT l.naam 
+                             FROM labels l 
+                             JOIN villa_labels vl ON l.id = vl.label_id 
+                             WHERE vl.villa_id = :villa_id"
+                        );
+                        $stmtLabels->execute(['villa_id' => $villa['id']]);
+                        $tags = $stmtLabels->fetchAll(PDO::FETCH_COLUMN);
+                        echo !empty($tags) ? htmlspecialchars(implode(', ', $tags)) : 'Geen';
+                        ?>
+                    </p>
                     <div class="villa-actions">
                         <a href="edit_villa.php?id=<?= $villa['id'] ?>" class="action-btn edit-btn">Bewerken</a>
                         <a href="?delete=<?= $villa['id'] ?>" class="action-btn delete-btn" id="deleteLink">Verwijderen</a>
