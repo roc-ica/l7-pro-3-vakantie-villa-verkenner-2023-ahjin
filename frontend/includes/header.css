@@ -56,17 +56,48 @@ a {
   }
   
   .nav-links a {
+    position: relative;
     transition: color 0.3s;
+  }
+  
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #009688; 
+    transition: width 0.3s ease-in-out;
+  }
+  
+  .nav-links a:hover::after {
+    width: 75%; /* Underline width on hover */
   }
   
   .nav-links a:hover {
     color: #009688;
   }
   
+  .register-btn::after,
+.login-btn::after {
+    display: none;
+}
+
   .register-btn {
     padding: 5px 15px;
-    border: 1px solid #333;
+    border: 1px solid #009688;
+    color: #009688;
     border-radius: 4px;
+    text-decoration: none; /* Remove underline */
+    transition: background-color 0.3s, color 0.3s;
+
+  }
+  
+  .register-btn:hover {
+    background-color: #00796b; /* Slightly darker shade on hover */
+    border-color: #00796b;
+    color: white !important;
   }
   
   .login-btn {
@@ -74,5 +105,12 @@ a {
     background-color: #009688;
     color: white;
     border-radius: 4px;
+    border: 1px solid #009688;
+    transition: background-color 0.3s, color 0.3s;
   }
   
+  .login-btn:hover {
+    background-color: transparent;
+    color: #009688;
+    border-color: #009688;
+  }
