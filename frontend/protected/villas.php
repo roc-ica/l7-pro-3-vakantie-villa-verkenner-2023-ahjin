@@ -16,20 +16,28 @@ try {
     
     // Toggle featured status
     if (isset($_GET['toggle_featured'])) {
-        $villaId = $_GET['toggle_featured'];
-        
-        // Get current featured status
-        $stmt = $conn->prepare("SELECT featured FROM villas WHERE id = :id");
-        $stmt->execute(['id' => $villaId]);
-        $currentStatus = $stmt->fetchColumn();
-        
-        // Toggle status
-        $newStatus = $currentStatus ? 0 : 1;
-        $stmt = $conn->prepare("UPDATE villas SET featured = :featured WHERE id = :id");
-        $stmt->execute(['featured' => $newStatus, 'id' => $villaId]);
-        
-        header("Location: villas.php");
-        exit();
+        try {
+            $conn->beginTransaction();
+            
+            $villaId = $_GET['toggle_featured'];
+            
+            // Get current featured status
+            $stmt = $conn->prepare("SELECT featured FROM villas WHERE id = :id");
+            $stmt->execute(['id' => $villaId]);
+            $currentStatus = $stmt->fetchColumn();
+            
+            // Toggle status
+            $newStatus = $currentStatus ? 0 : 1;
+            $stmt = $conn->prepare("UPDATE villas SET featured = :featured WHERE id = :id");
+            $stmt->execute(['featured' => $newStatus, 'id' => $villaId]);
+            
+            $conn->commit();
+            header("Location: villas.php");
+            exit();
+        } catch (Exception $e) {
+            $conn->rollBack();
+            echo "Error updating featured status: " . $e->getMessage();
+        }
     }
     
     // Villa toevoegen
@@ -63,17 +71,21 @@ try {
 
             // Stap 3: Afbeelding uploaden
             if (!empty($_FILES['villa_image']['name'])) {
-                $targetDir = "../uploads/";
-                if (!is_dir($targetDir)) {
-                    mkdir($targetDir, 0777, true);
+                $uploadDir = "../uploads/";
+                $relativePath = "uploads/";
+                
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
                 }
 
-                $fileName = time() . "_" . basename($_FILES["villa_image"]["name"]);
-                $targetFilePath = $targetDir . $fileName;
+                $fileExtension = pathinfo($_FILES["villa_image"]["name"], PATHINFO_EXTENSION);
+                $newFileName = 'villa_' . $villaId . '_' . time() . '.' . $fileExtension;
+                $targetFilePath = $uploadDir . $newFileName;
+                $dbPath = $relativePath . $newFileName;
 
                 if (move_uploaded_file($_FILES["villa_image"]["tmp_name"], $targetFilePath)) {
                     $stmt = $conn->prepare("INSERT INTO villa_images (villa_id, image_path) VALUES (:villa_id, :image_path)");
-                    $stmt->execute(['villa_id' => $villaId, 'image_path' => $targetFilePath]);
+                    $stmt->execute(['villa_id' => $villaId, 'image_path' => $dbPath]);
                 }
             }
 
@@ -88,10 +100,39 @@ try {
 
     // Villa verwijderen
     if (isset($_GET['delete'])) {
-        $stmt = $conn->prepare("DELETE FROM villas WHERE id = :id");
-        $stmt->execute(['id' => $_GET['delete']]);
-        header("Location: villas.php");
-        exit();
+        try {
+            $conn->beginTransaction();
+            
+            // First delete related records
+            $stmt = $conn->prepare("DELETE FROM villa_labels WHERE villa_id = :id");
+            $stmt->execute(['id' => $_GET['delete']]);
+            
+            // Delete villa images (both from database and files)
+            $stmt = $conn->prepare("SELECT image_path FROM villa_images WHERE villa_id = :id");
+            $stmt->execute(['id' => $_GET['delete']]);
+            $images = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($images as $image) {
+                $fullPath = '../' . $image;
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+            
+            $stmt = $conn->prepare("DELETE FROM villa_images WHERE villa_id = :id");
+            $stmt->execute(['id' => $_GET['delete']]);
+            
+            // Finally delete the villa
+            $stmt = $conn->prepare("DELETE FROM villas WHERE id = :id");
+            $stmt->execute(['id' => $_GET['delete']]);
+            
+            $conn->commit();
+            header("Location: villas.php");
+            exit();
+        } catch (Exception $e) {
+            $conn->rollBack();
+            echo "Error deleting villa: " . $e->getMessage();
+        }
     }
 
     // Villas ophalen
@@ -207,7 +248,7 @@ try {
                     $stmtImg = $conn->prepare("SELECT image_path FROM villa_images WHERE villa_id = :villa_id LIMIT 1");
                     $stmtImg->execute(['villa_id' => $villa['id']]);
                     $image = $stmtImg->fetch(PDO::FETCH_ASSOC);
-                    $imagePath = $image ? $image['image_path'] : 'villa-placeholder.jpg';
+                    $imagePath = $image ? '../' . $image['image_path'] : '../../assets/img/placeholder-villa.jpg';
                     ?>
                     <img src="<?= htmlspecialchars($imagePath) ?>" alt="Villa Afbeelding">
                     <?php if ($villa['featured']): ?>

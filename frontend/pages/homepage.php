@@ -12,7 +12,7 @@ $featuredVillas = [];
 // Check if connection is successful
 if ($conn) {
     try {
-        // Prepare and execute query to get featured villas
+        // Only get villas that are explicitly marked as featured
         $stmt = $conn->prepare("
             SELECT v.*, 
                    (SELECT vi.image_path FROM villa_images vi WHERE vi.villa_id = v.id LIMIT 1) as image_path 
@@ -22,40 +22,10 @@ if ($conn) {
             LIMIT 3
         ");
         $stmt->execute();
-        
-        // Fetch all villas
         $featuredVillas = $stmt->fetchAll();
         
-        // If there are fewer than 3 featured villas, get the most recent ones to fill in
-        if (count($featuredVillas) < 3) {
-            $neededVillas = 3 - count($featuredVillas);
-            
-            // Get IDs of already fetched villas to exclude them
-            $excludeIds = array_map(function($villa) {
-                return $villa['id'];
-            }, $featuredVillas);
-            
-            $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
-            $excludeQuery = count($excludeIds) > 0 ? "AND v.id NOT IN ($placeholders)" : "";
-            
-            $stmt = $conn->prepare("
-                SELECT v.*, 
-                       (SELECT vi.image_path FROM villa_images vi WHERE vi.villa_id = v.id LIMIT 1) as image_path 
-                FROM villas v 
-                WHERE v.featured = 0 $excludeQuery
-                ORDER BY v.id DESC 
-                LIMIT $neededVillas
-            ");
-            
-            if (count($excludeIds) > 0) {
-                $stmt->execute($excludeIds);
-            } else {
-                $stmt->execute();
-            }
-            
-            $additionalVillas = $stmt->fetchAll();
-            $featuredVillas = array_merge($featuredVillas, $additionalVillas);
-        }
+        // Remove the fallback logic for non-featured villas
+        // We only want to show villas that are explicitly marked as featured
         
     } catch (PDOException $e) {
         // Log error but don't display to users
@@ -101,12 +71,12 @@ if ($conn) {
         </div>
         
         <div class="villas-container">
-            <?php if (count($featuredVillas) > 0): ?>
+            <?php if (!empty($featuredVillas)): ?>
                 <?php foreach ($featuredVillas as $villa): ?>
                     <div class="villa-card">
                         <div class="villa-image">
                             <?php if (!empty($villa['image_path'])): ?>
-                                <img src="<?php echo htmlspecialchars($villa['image_path']); ?>" alt="<?php echo htmlspecialchars($villa['straat']); ?>">
+                                <img src="../<?php echo htmlspecialchars($villa['image_path']); ?>" alt="<?php echo htmlspecialchars($villa['straat']); ?>">
                             <?php else: ?>
                                 <img src="../../assets/img/placeholder-villa.jpg" alt="Villa afbeelding niet beschikbaar">
                             <?php endif; ?>
@@ -131,9 +101,8 @@ if ($conn) {
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <!-- Fallback content if no villas are found -->
                 <div class="no-villas">
-                    <p>Er zijn momenteel geen uitgelichte villa's beschikbaar. Bekijk onze <a href="woningen.php">volledige collectie</a>.</p>
+                    <p>Er zijn momenteel geen uitgelichte villa's beschikbaar.</p>
                 </div>
             <?php endif; ?>
         </div>
