@@ -148,8 +148,41 @@ if ($conn) {
                     </div>
                 </div>
                 
-                <!-- Other reviews remain the same -->
+                <div class="review" id="review2">
+                    <div class="review-text">
+                        <p>"De service van Villa Verkenner was uitstekend. Ze hielpen ons niet alleen met het vinden van een villa, maar ook met het regelen van lokale activiteiten. Het team is zeer professioneel en vriendelijk. Bedankt voor een onvergetelijke ervaring!"</p>
+                        <div class="reviewer">
+                            <strong>Kaj Rover</strong> - Gehuurd in Akureyri, Mei 2023
+                        </div>
+                    </div>
+                </div>
                 
+                <div class="review" id="review3">
+                    <div class="review-text">
+                        <p>"Ik was onder de indruk van de uitgebreide selectie villa's op de website. De foto's en beschrijvingen waren zeer gedetailleerd, wat het kiezen van de perfecte villa eenvoudig maakte. Een geweldige ervaring van begin tot eind!"</p>
+                        <div class="reviewer">
+                            <strong>Musie Mulugeta</strong> - Gekocht in Selfoss, Juni 2023
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="review" id="review4">
+                    <div class="review-text">
+                        <p>"Villa Verkenner heeft onze verwachtingen overtroffen. De villa die we huurden was prachtig en precies zoals beschreven. Het boeken was eenvoudig en het team stond altijd klaar om onze vragen te beantwoorden. We komen zeker terug!"</p>
+                        <div class="reviewer">
+                            <strong>Artem Kosikhin</strong> - Gehuurd in Vik, Juli 2023
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="review" id="review5">
+                    <div class="review-text">
+                        <p>"Ik kan Villa Verkenner niet genoeg aanbevelen. Hun aandacht voor detail en klantgerichtheid maakten onze vakantie in IJsland onvergetelijk. De villa was perfect en de locatie adembenemend. Bedankt voor alles!"</p>
+                        <div class="reviewer">
+                            <strong>Colin Poort</strong> - Gehuurd in Hofn, Augustus 2023
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
