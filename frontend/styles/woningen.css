@@ -183,7 +183,7 @@ main.properties-grid {
 .end-list {
     text-align: center;
     color: #777;
-    margin-top: 20px;
+    margin-bottom: 30px;
     grid-column: 1 / -1;
 }
 
@@ -208,6 +208,34 @@ main.properties-grid {
 .pagination span {
     color: #555;
     margin: 0 5px;
+}
+
+.pagination-arrows {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+    grid-column: 1 / -1;
+}
+
+.pagination-arrow {
+    background-color: #00a3a3;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.pagination-arrow:hover {
+    background-color: #007a7a;
+}
+
+.pagination-arrow.disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Responsive Design Adjustments */

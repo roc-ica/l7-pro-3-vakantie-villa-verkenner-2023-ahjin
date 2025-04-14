@@ -75,6 +75,16 @@ if (empty($filters['zoekterm']) &&
     $properties = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Add after database connection and before formatting properties
+$itemsPerPage = 4;
+$currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$totalItems = count($properties);
+$totalPages = ceil($totalItems / $itemsPerPage);
+$offset = ($currentPage - 1) * $itemsPerPage;
+
+// Slice the properties array for pagination
+$properties = array_slice($properties, $offset, $itemsPerPage);
+
 // --- Format Data for Display ---
 $formattedProperties = [];
 foreach ($properties as $row) {
@@ -189,6 +199,21 @@ $liggingLabels = ['Bij het bos', 'Aan het water', 'Bij de stad', 'In het heuvell
 
         <?php if (!empty($formattedProperties)): ?>
             <div class="end-list">einde lijst</div>
+            <div class="pagination-arrows">
+                <?php if ($currentPage > 1): ?>
+                    <a href="?page=<?= $currentPage - 1 ?><?= !empty($_GET['zoekterm']) ? '&zoekterm=' . htmlspecialchars($_GET['zoekterm']) : '' ?>" class="pagination-arrow">←</a>
+                <?php else: ?>
+                    <span class="pagination-arrow disabled">←</span>
+                <?php endif; ?>
+                
+                <span>Pagina <?= $currentPage ?> van <?= $totalPages ?></span>
+                
+                <?php if ($currentPage < $totalPages): ?>
+                    <a href="?page=<?= $currentPage + 1 ?><?= !empty($_GET['zoekterm']) ? '&zoekterm=' . htmlspecialchars($_GET['zoekterm']) : '' ?>" class="pagination-arrow">→</a>
+                <?php else: ?>
+                    <span class="pagination-arrow disabled">→</span>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
     </main>
 </div>
