@@ -79,10 +79,9 @@
 
 <?php include '../includes/footer.php'; ?>
 
+
   
 
 </body>
-<script src="../js/restaurant-slider.js"></script>
-<script src="../js/sidebar.js"></script>
 
 </html>

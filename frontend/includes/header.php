@@ -9,8 +9,6 @@
                         <li><a href="woningen.php">Woningen</a></li>
                         <li><a href="overons.php">Ons</a></li>
                         <li><a href="contact.php">Contact</a></li>
-                        <li><a href="register.php" class="register-btn">Register</a></li>
-                        <li><a href="login.php" class="login-btn">Login</a></li>
                     </ul>
                 </nav>
             </div>

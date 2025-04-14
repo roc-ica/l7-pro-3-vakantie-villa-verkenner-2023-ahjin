@@ -43,10 +43,9 @@ nav a:hover {
 
 .container {
     display: flex;
-    padding: 20px;
-    gap: 20px;
-    background-color: #f0f4f8;
-}
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
 aside.filters {
     width: 250px;
@@ -128,9 +127,11 @@ main.properties-grid {
 }
 
 .property-card {
-    
     border-radius: 10px;
     overflow: hidden;
+    max-width: 400px;
+    max-height: 500px;
+    margin: 0 50px;
 }
 
 .property-card img {
@@ -209,51 +210,6 @@ main.properties-grid {
     margin: 0 5px;
 }
 
-footer {
-    background-color: #2c3e50;
-    color: #fff;
-    padding: 30px;
-}
-
-.footer-columns {
-    display: flex;
-    justify-content: space-around;
-}
-
-.footer-column h4 {
-    color: #fff;
-    margin-bottom: 15px;
-}
-
-.footer-column p, .footer-column ul {
-    color: #ddd;
-    line-height: 1.6;
-}
-
-.footer-column ul {
-    list-style: none;
-    padding: 0;
-}
-
-.footer-column li {
-    margin-bottom: 8px;
-}
-
-.footer-column a {
-    color: #ddd;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-.footer-column a:hover {
-    color: #fff;
-}
-
-.footer-column img {
-    height: 30px; /* Adjusted if necessary */
-    margin-top: 10px;
-}
-
 /* Responsive Design Adjustments */
 @media (max-width: 768px) {
     .container {
@@ -277,17 +233,6 @@ footer {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Slightly smaller min width */
     }
 
-    .footer-columns {
-        flex-direction: column;
-        text-align: center; /* Center text in columns */
-    }
-
-    .footer-column {
-        margin-bottom: 20px; /* Add space between stacked footer columns */
-    }
-    .footer-column:last-child {
-        margin-bottom: 0;
-    }
 }
 
 @media (max-width: 480px) {
@@ -402,10 +347,11 @@ input[type="range"]::-webkit-slider-thumb {
 /* --- Filter Styling Enhancements --- */
 
 aside.filters {
-    /* background-color: #fff; */ /* Optional: White background for filters */
-    /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); */ /* Optional: Subtle shadow */
+    background-color: #fff;
+     box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
     border: 1px solid #e0e4e8; /* Lighter border */
     padding: 25px; /* Slightly more padding */
+    margin-bottom: 50px;
 }
 
 .search-bar {

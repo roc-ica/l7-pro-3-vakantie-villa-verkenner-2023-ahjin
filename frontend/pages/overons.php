@@ -7,6 +7,7 @@
     <title>Vakantie Villas - IJsland</title>
     <link rel="stylesheet" href="../styles/overons.css">
     <link rel="stylesheet" href="../includes/header.css">
+    <link rel="stylesheet" href="../includes/footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
@@ -99,46 +100,7 @@
         </div>
     </section>
     <!-- Footer -->
-    <footer>
-        <div class="container footer-container">
-            <div class="footer-column">
-                <h3>Contact</h3>
-                <ul>
-                    <li><a href="mailto:contact@vakantievillas.com">contact@vakantievillas.com</a></li>
-                    <li>+31 6 1234 5678</li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Menu</h3>
-                <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Woningen</a></li>
-                    <li><a href="#">Ons</a></li>
-                    <li><a href="#">Contact</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Support</h3>
-                <ul>
-                    <li><a href="mailto:support@vakantievillas.com">support@vakantievillas.com</a></li>
-                    <li>+31 6 9876 5432</li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Adres</h3>
-                <ul>
-                    <li>Laugavegur 12</li>
-                    <li>101 Reykjavík</li>
-                    <li>IJsland</li>
-                </ul>
-            </div>
-
-            <div class="footer-glow"></div>
-        </div>
-    </footer>
+  <?php include '../includes/footer.php'; ?>
 
     <script src="../script/overons.js"></script>
 </body>
