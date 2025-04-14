@@ -1,38 +1,40 @@
-<footer class="site-footer">
-    <div class="footer-container">
-        <div class="footer-columns">
+<footer>
+        <div class="container footer-container">
             <div class="footer-column">
-                <h4>Villa Verkenner</h4>
-                <p>Ontdek uw droomvakantiewoning op de mooiste locaties wereldwijd. Wij helpen u bij het vinden van de perfecte villa voor een onvergetelijke vakantie.</p>
-            </div>
-            <div class="footer-column">
-                <h4>Snel navigeren</h4>
+                <h3>Contact</h3>
                 <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/pages/woningen.php">Woningen</a></li>
-                    <li><a href="/pages/about.php">Over ons</a></li>
-                    <li><a href="/pages/contact.php">Contact</a></li>
+                    <li><a href="mailto:contact@vakantievillas.com">contact@vakantievillas.com</a></li>
+                    <li>+31 6 1234 5678</li>
                 </ul>
             </div>
+
             <div class="footer-column">
-                <h4>Contact</h4>
+                <h3>Menu</h3>
                 <ul>
-                    <li><img src="../../assets/img/location.png" alt="Adres">Voorbeeldstraat 123, 1234 AB Amsterdam</li>
-                    <li><img src="../../assets/img/phone.png" alt="Telefoon">+31 (0)20 123 4567</li>
-                    <li><img src="../../assets/img/email.png" alt="Email">info@villaverkenner.nl</li>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Woningen</a></li>
+                    <li><a href="#">Ons</a></li>
+                    <li><a href="#">Contact</a></li>
                 </ul>
             </div>
+
             <div class="footer-column">
-                <h4>Volg ons</h4>
-                <div class="social-icons">
-                    <a href="#" class="social-icon"><img src="../../assets/img/facebook.png" alt="Facebook"></a>
-                    <a href="#" class="social-icon"><img src="../../assets/img/instagram.png" alt="Instagram"></a>
-                    <a href="#" class="social-icon"><img src="../../assets/img/twitter.png" alt="Twitter"></a>
-                </div>
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="mailto:support@vakantievillas.com">support@vakantievillas.com</a></li>
+                    <li>+31 6 9876 5432</li>
+                </ul>
             </div>
+
+            <div class="footer-column">
+                <h3>Adres</h3>
+                <ul>
+                    <li>Laugavegur 12</li>
+                    <li>101 Reykjavík</li>
+                    <li>IJsland</li>
+                </ul>
+            </div>
+
+            <div class="footer-glow"></div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; <?php echo date("Y"); ?> Villa Verkenner. Alle rechten voorbehouden.</p>
-        </div>
-    </div>
-</footer>
+    </footer>

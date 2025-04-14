@@ -7,6 +7,7 @@
     <title>Real Estate Website</title>
     <link rel="stylesheet" href="../styles/woningen.css">
     <link rel="stylesheet" href="../includes/header.css">
+    <link rel="stylesheet" href="../includes/footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="../script/script.js"></script>
 </head>
@@ -38,6 +39,41 @@ $filters = [
 // --- Fetch Filtered Villas ---
 $filterHandler = new Filter($filters);
 $properties = $filterHandler->getFilteredVillas();
+
+// If no filters are applied, get all villas
+if (empty($filters['zoekterm']) && 
+    $filters['min_price'] == 10000 && 
+    $filters['max_price'] == 10000000 && 
+    empty($filters['faciliteiten']) && 
+    empty($filters['ligging']) && 
+    $filters['min_area'] == 10 && 
+    $filters['max_area'] == 1000 && 
+    $filters['kamers'] == 0 && 
+    $filters['slaapkamers'] == 0 && 
+    $filters['badkamers'] == 0) {
+    
+    // Create database connection
+    $db = new Database();
+    $conn = $db->getConnection();
+    
+    // Fetch all villas with their images and labels
+    $query = "SELECT v.*, 
+              (SELECT vi.image_path 
+               FROM villa_images vi 
+               WHERE vi.villa_id = v.id 
+               LIMIT 1) as image,
+              GROUP_CONCAT(l.naam SEPARATOR ', ') as tags
+              FROM villas v 
+              LEFT JOIN villa_labels vl ON v.id = vl.villa_id 
+              LEFT JOIN labels l ON vl.label_id = l.id 
+              GROUP BY v.id, v.straat, v.post_c, v.kamers, 
+                       v.badkamers, v.slaapkamers, v.oppervlakte, 
+                       v.prijs, v.featured";
+              
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
+    $properties = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 // --- Format Data for Display ---
 $formattedProperties = [];
@@ -156,7 +192,7 @@ $liggingLabels = ['Bij het bos', 'Aan het water', 'Bij de stad', 'In het heuvell
         <?php endif; ?>
     </main>
 </div>
+<?php include '../includes/footer.php'; ?>
 
-<?php include_once '../includes/footer.php'; ?>
 </body>
 </html>
