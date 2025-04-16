@@ -537,6 +537,10 @@ img {
 
 /* Additional responsive adjustments for smaller screens */
 @media screen and (max-width: 480px) {
+  .nature-images {
+    flex-direction: column;
+    align-items: center;
+  }
   .member-info{
     transform: translate(80px, -130px)
   }
