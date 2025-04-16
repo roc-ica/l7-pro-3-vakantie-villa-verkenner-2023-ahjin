@@ -100,10 +100,11 @@ foreach ($paginatedProperties as $row) {
     $address = implode(', ', $addressParts);
 
     // Determine image path (handle potential relative paths from DB)
-    $imagePath = '../../assets/img/default-villa.jpg'; // Default image
+    $imagePath = '../assets/img/default-villa.jpg'; // Default image
     if (!empty($row['image'])) {
-        // Use the path relative to the current script location for the <img> tag
-        $imagePath = htmlspecialchars($row['image']); // Path for img src
+        // Just store the original path from the database
+        // The actual path transformation will happen when rendering
+        $imagePath = $row['image']; 
     }
 
     $formattedProperties[] = [
@@ -224,7 +225,15 @@ $separator = !empty($queryString) ? '&' : '';
             <?php foreach ($formattedProperties as $property): ?>
                 <div class="property-card">
                     <a href="detailview.php?id=<?= $property['id'] ?>" class="card-link-wrapper">
-                        <img src="<?= $property['image']; ?>" alt="<?= $property['title']; ?>">
+                        <?php 
+                        // Prepare the image path correctly
+                        $displayImagePath = $property['image'];
+                        if (!empty($displayImagePath) && strpos($displayImagePath, '../') === false) {
+                            // If the path doesn't already have a proper prefix, add it
+                            $displayImagePath = '../uploads/' . basename($displayImagePath);
+                        }
+                        ?>
+                        <img src="<?= htmlspecialchars($displayImagePath); ?>" alt="<?= $property['title']; ?>">
                         <div class="card-content">
                             <h3><?= $property['title']; ?></h3>
                             <p class="address"><?= $property['address']; ?></p>
