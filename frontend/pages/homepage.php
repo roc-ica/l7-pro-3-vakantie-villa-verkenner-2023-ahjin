@@ -15,7 +15,13 @@ if ($conn) {
         // Only get villas that are explicitly marked as featured
         $stmt = $conn->prepare("
             SELECT v.*, 
-                   (SELECT vi.image_path FROM villa_images vi WHERE vi.villa_id = v.id LIMIT 1) as image_path 
+                   (SELECT vi.image_path FROM villa_images vi 
+                    WHERE vi.villa_id = v.id 
+                    AND (vi.is_hoofdfoto = 1 OR vi.is_main = 1) 
+                    LIMIT 1) as main_image,
+                   (SELECT vi.image_path FROM villa_images vi 
+                    WHERE vi.villa_id = v.id 
+                    LIMIT 1) as image_path
             FROM villas v 
             WHERE v.featured = 1
             ORDER BY v.id DESC 
@@ -76,7 +82,9 @@ if ($conn) {
                 <?php foreach ($featuredVillas as $villa): ?>
                     <div class="villa-card">
                         <div class="villa-image">
-                            <?php if (!empty($villa['image_path'])): ?>
+                            <?php if (!empty($villa['main_image'])): ?>
+                                <img src="../<?php echo htmlspecialchars($villa['main_image']); ?>" alt="<?php echo htmlspecialchars($villa['straat']); ?>">
+                            <?php elseif (!empty($villa['image_path'])): ?>
                                 <img src="../<?php echo htmlspecialchars($villa['image_path']); ?>" alt="<?php echo htmlspecialchars($villa['straat']); ?>">
                             <?php else: ?>
                                 <img src="../../assets/img/placeholder-villa.jpg" alt="Villa afbeelding niet beschikbaar">
@@ -97,7 +105,7 @@ if ($conn) {
                                 <span><?php echo htmlspecialchars($villa['badkamers']); ?> badkamers</span>
                                 <span><?php echo htmlspecialchars($villa['oppervlakte']); ?>m²</span>
                             </div>
-                            <a href="woning-detail.php?id=<?php echo $villa['id']; ?>" class="more-info">Meer informatie</a>
+                            <a href="detailview.php?id=<?php echo $villa['id']; ?>" class="more-info">Meer informatie</a>
                         </div>
                     </div>
                 <?php endforeach; ?>

@@ -1,9 +1,26 @@
 <?php
-session_start();
+// login.php - Admin Login Page
+require_once __DIR__ . '/../../db/class/sessions.php';
 
-if (isset($_SESSION['username'])) {
+// Redirect to admin panel if already logged in using SessionManager
+if (SessionManager::validateAdminSession()) {
     header('Location: admin.php');
-    exit();
+    exit;
+}
+
+$error_message = '';
+if (isset($_GET['error'])) {
+    if ($_GET['error'] === 'invalid') {
+        $error_message = 'Ongeldige gebruikersnaam of wachtwoord.';
+    } elseif ($_GET['error'] === 'dberror') {
+        $error_message = 'Databasefout. Probeer het later opnieuw.';
+    } elseif ($_GET['error'] === 'missing') {
+        $error_message = 'Vul aub gebruikersnaam en wachtwoord in.';
+    } elseif ($_GET['error'] === 'auth') {
+        $error_message = 'U moet ingelogd zijn om die pagina te bekijken.';
+    } elseif ($_GET['error'] === 'server_error') {
+        $error_message = 'Er is een serverfout opgetreden. Probeer het opnieuw.';
+    }
 }
 
 ?>
@@ -12,54 +29,34 @@ if (isset($_SESSION['username'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./assets/styles.css">
-    <title>Login - VillaVerkenner</title>
+    <title>Admin Login - Vakantie Villas</title>
+    <link rel="stylesheet" href="styles/login.css"> <!-- Create this CSS file -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="login-container">
-        <h2>Login to VillaVerkenner</h2>
-        
-        <?php
-        // Process any error messages
-        if (isset($_GET['error'])) {
-            $error = $_GET['error'];
-            $errorMessage = '';
+        <div class="login-box">
+            <img src="../assets/img/logo.png" alt="Vakantie Villas Logo" class="login-logo">
+            <h2>Admin Login</h2>
+            <p>Log in om het interne systeem te beheren.</p>
             
-            switch ($error) {
-                case 'invalid_request':
-                    $errorMessage = 'Invalid request method.';
-                    break;
-                case 'missing_fields':
-                    $errorMessage = 'Please fill in all required fields.';
-                    break;
-                case 'invalid_credentials':
-                    $errorMessage = 'Invalid username or password.';
-                    break;
-                case 'db_connection':
-                    $errorMessage = 'Database connection error.';
-                    break;
-                case 'server_error':
-                    $errorMessage = 'An error occurred. Please try again later.';
-                    break;
-                default:
-                    $errorMessage = 'An unknown error occurred.';
-            }
-            
-            echo '<div class="error-message">' . htmlspecialchars($errorMessage) . '</div>';
-        }
-        ?>
-        
-        <form action="login_process.php" method="post">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
+            <?php if ($error_message): ?>
+                <p class="error-message"><?= htmlspecialchars($error_message) ?></p>
+            <?php endif; ?>
+
+            <form action="login_process.php" method="POST">
+                <div class="form-group">
+                    <label for="username">Gebruikersnaam</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Wachtwoord</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-login">Inloggen</button>
+            </form>
+            <p class="back-link"><a href="../pages/homepage.php">← Terug naar de website</a></p>
+        </div>
     </div>
 </body>
 </html>

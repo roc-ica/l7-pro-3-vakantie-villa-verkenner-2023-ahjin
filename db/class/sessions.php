@@ -3,151 +3,170 @@ require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/database.php';
 
 class SessionManager {
-    private PDO $conn;
-    private string $username;
-    private string $login_time;
-    private Logger $logger;
-
-    private const SESSION_NAME = 'villa_verkenner_session';
-    private const SESSION_LIFETIME = 3600; // 1 hour
-
-    public function __construct(PDO $conn, string $username, string $login_time) {
-        $this->conn = $conn;
-        $this->username = $username;
-        $this->login_time = $login_time;
-        $this->logger = new Logger();
-    }
+    // Constants for session configuration
+    private const SESSION_NAME = 'villa_admin_session'; // More specific name
+    private const SESSION_LIFETIME = 3600; // 1 hour validity
+    private const SESSION_REGENERATE_TIME = 300; // Regenerate ID every 5 minutes
 
     /**
-     * Start the user session and store necessary information
+     * Configures and starts a secure session if not already started.
      */
-    private function startSession() {
-        // Log session start attempt
-        error_log("Starting session for user: {$this->username}");
+    private static function ensureSessionStarted(): bool {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return true; // Already started
+        }
         
-        try {
-            if (session_status() === PHP_SESSION_NONE) {
-                // Configure secure session settings
+        if (session_status() === PHP_SESSION_NONE) {
+            try {
+                // Secure session settings
                 ini_set('session.use_strict_mode', 1);
                 ini_set('session.use_only_cookies', 1);
                 ini_set('session.cookie_httponly', 1);
-                
+                ini_set('session.cookie_samesite', 'Lax'); // Or 'Strict' if appropriate
+
+                // Set secure flag if HTTPS is used
                 if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
                     ini_set('session.cookie_secure', 1);
                 }
+
+                session_name(self::SESSION_NAME);
+                session_set_cookie_params([
+                    'lifetime' => 0, // Cookie lives until browser close, session lifetime handled server-side
+                    'path' => '/', // Available across the entire domain
+                    'domain' => $_SERVER['HTTP_HOST'], // Use current host
+                    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+                    'httponly' => true,
+                    'samesite' => 'Lax' 
+                ]);
                 
-                session_name(self::SESSION_NAME);
-                session_set_cookie_params(self::SESSION_LIFETIME);
-                session_start();
-                error_log("Session started successfully with name: " . self::SESSION_NAME);
-            } else {
-                error_log("Session already active");
+                if (session_start()) {
+                    error_log("Session started successfully: " . self::SESSION_NAME);
+                    return true;
+                } else {
+                     error_log("session_start() failed.");
+                     return false;
+                }
+            } catch (Exception $e) {
+                 error_log("Error configuring/starting session: " . $e->getMessage());
+                 return false;
             }
+        } else {
+            // Session is disabled or other issue
+             error_log("Session is disabled or could not be started.");
+             return false;
+        }
+    }
 
-            // Regenerate session ID to prevent session fixation
+    /**
+     * Start the admin session after successful login.
+     */
+    public static function startAdminSession(int $adminId, string $username): bool {
+        if (!self::ensureSessionStarted()) {
+             error_log("Admin session start failed: Could not ensure session started.");
+            return false;
+        }
+        
+        try {
+            // Regenerate ID to prevent session fixation
             session_regenerate_id(true);
-            error_log("Session ID regenerated");
+            error_log("Admin session ID regenerated for user: " . $username);
 
-            // Store user information in session
-            $_SESSION['username'] = $this->username;
-            $_SESSION['login_time'] = $this->login_time;
+            // Clear any previous session data (start fresh)
+            $_SESSION = []; 
+
+            // Store essential admin information
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_id'] = $adminId;
+            $_SESSION['admin_username'] = $username;
             $_SESSION['last_activity'] = time();
-            error_log("Session data stored for user: {$this->username}");
+            $_SESSION['session_start_time'] = time(); // For ID regeneration tracking
 
-            // Log the login activity
-            $this->logger->logLogin($this->username, $this->conn, $this->login_time);
-            error_log("Login activity logged successfully");
-        } catch (Exception $e) {
-            error_log("Error in startSession: " . $e->getMessage());
-            throw $e;
-        }
-    }
-    
-    /**
-     * Start a new user session
-     */
-    public function SessionS() {
-        try {
-            error_log("SessionS method called for user: {$this->username}");
-            $this->startSession();
+            error_log("Admin session data stored for user: {$username} (ID: {$adminId})");
             return true;
         } catch (Exception $e) {
-            error_log("Error in SessionS: " . $e->getMessage());
+             error_log("Error in startAdminSession: " . $e->getMessage());
             return false;
         }
     }
     
     /**
-     * Check if a session is valid and not expired
-     * 
-     * @return bool True if the session is valid
+     * Validates the current admin session.
+     * Checks for login status, activity timeout, and regenerates ID periodically.
      */
-    public static function validateSession() {
-        try {
-            error_log("validateSession called");
-            if (session_status() === PHP_SESSION_NONE) {
-                session_name(self::SESSION_NAME);
-                session_start();
-                error_log("Session started in validateSession");
-            }
-            
-            // Check if required session data exists
-            if (!isset($_SESSION['username']) || !isset($_SESSION['last_activity'])) {
-                error_log("Session validation failed: required data missing");
-                return false;
-            }
-            
-            // Check for session timeout
-            $inactiveTime = time() - $_SESSION['last_activity'];
-            if ($inactiveTime > self::SESSION_LIFETIME) {
-                // Session expired, destroy it
-                error_log("Session expired after {$inactiveTime} seconds of inactivity");
-                self::destroySession();
-                return false;
-            }
-            
-            // Update last activity time
-            $_SESSION['last_activity'] = time();
-            error_log("Session validated for user: {$_SESSION['username']}");
-            return true;
-        } catch (Exception $e) {
-            error_log("Error in validateSession: " . $e->getMessage());
+    public static function validateAdminSession(): bool {
+        if (!self::ensureSessionStarted()) {
+            return false; // Cannot validate if session won't start
+        }
+        
+        // Check if essential session variables are set
+        if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['admin_id']) || !isset($_SESSION['last_activity'])) {
+            error_log("Admin session validation failed: Required data missing or not logged in.");
             return false;
         }
+        
+        // Check for session timeout based on last activity
+        $inactiveTime = time() - $_SESSION['last_activity'];
+        if ($inactiveTime > self::SESSION_LIFETIME) {
+            error_log("Admin session expired due to inactivity ({$inactiveTime}s) for user: {$_SESSION['admin_username']}");
+            self::destroySession();
+            return false;
+        }
+
+         // Regenerate session ID periodically for enhanced security
+         if (!isset($_SESSION['session_start_time']) || (time() - $_SESSION['session_start_time'] > self::SESSION_REGENERATE_TIME)) {
+             if (session_regenerate_id(true)) {
+                 $_SESSION['session_start_time'] = time(); // Reset timer after regeneration
+                 error_log("Admin session ID regenerated periodically for user: {$_SESSION['admin_username']}");
+             } else {
+                  error_log("Periodic session ID regeneration failed for user: {$_SESSION['admin_username']}");
+                 // Optionally destroy session if regeneration fails, or just log it
+             }
+         }
+        
+        // Update last activity time on successful validation
+        $_SESSION['last_activity'] = time();
+        error_log("Admin session validated for user: {$_SESSION['admin_username']}");
+        return true;
     }
     
     /**
-     * Destroy the current session
+     * Destroy the current admin session and clear associated data.
      */
     public static function destroySession() {
+        if (!self::ensureSessionStarted()) {
+            return; // No session to destroy
+        }
+
         try {
-            error_log("destroySession called");
-            if (session_status() === PHP_SESSION_ACTIVE) {
-                // Clear session data
-                $_SESSION = [];
-                
-                // Delete the session cookie
-                if (ini_get("session.use_cookies")) {
-                    $params = session_get_cookie_params();
-                    setcookie(
-                        session_name(),
-                        '',
-                        time() - 42000,
-                        $params["path"],
-                        $params["domain"],
-                        $params["secure"],
-                        $params["httponly"]
-                    );
-                }
-                
-                // Destroy the session
-                session_destroy();
-                error_log("Session destroyed successfully");
-            } else {
-                error_log("No active session to destroy");
+            error_log("Attempting to destroy admin session for user: " . ($_SESSION['admin_username'] ?? 'unknown'));
+            
+            // Clear session data from the superglobal
+            $_SESSION = [];
+            
+            // Delete the session cookie
+            if (ini_get("session.use_cookies")) {
+                $params = session_get_cookie_params();
+                setcookie(
+                    session_name(),
+                    '',
+                    time() - 42000, // Set expiry in the past
+                    $params["path"],
+                    $params["domain"],
+                    $params["secure"],
+                    $params["httponly"]
+                );
+                error_log("Session cookie deleted.");
             }
+            
+            // Destroy the session on the server
+            if (session_destroy()) {
+                 error_log("Admin session destroyed successfully.");
+            } else {
+                 error_log("session_destroy() failed.");
+            }
+
         } catch (Exception $e) {
-            error_log("Error in destroySession: " . $e->getMessage());
+            error_log("Error during admin session destruction: " . $e->getMessage());
         }
     }
 }

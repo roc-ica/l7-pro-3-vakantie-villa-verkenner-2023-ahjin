@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real Estate Website</title>
+    <title>Vakantie Villas - Woningen</title>
     <link rel="stylesheet" href="../styles/woningen.css">
     <link rel="stylesheet" href="../includes/header.css">
     <link rel="stylesheet" href="../includes/footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="../script/script.js"></script>
+    <script src="../script/script.js" defer></script>
 </head>
 
 <body>
@@ -19,35 +19,39 @@
 </div>
 
 <?php
-include '../../db/class/database.php';
-include '../../db/class/filter.php';
+require_once __DIR__ . '/../../db/class/database.php';
+require_once __DIR__ . '/../../db/class/filter.php';
 
 // --- Initialize Filter Values ---
 $filters = [
     'zoekterm' => $_GET['zoekterm'] ?? '',
-    'min_price' => $_GET['min_price'] ?? 10000, // Default min price
-    'max_price' => $_GET['max_price'] ?? 10000000, // Default max price
-    'faciliteiten' => $_GET['faciliteiten'] ?? [],
+    'min_price' => isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0,
+    'max_price' => isset($_GET['max_price']) ? (int)$_GET['max_price'] : 0,
+    'eigenschappen' => $_GET['eigenschappen'] ?? [],
     'ligging' => $_GET['ligging'] ?? [],
-    'min_area' => $_GET['min_area'] ?? 10, // Default min area
-    'max_area' => $_GET['max_area'] ?? 1000, // Default max area
-    'kamers' => $_GET['kamers'] ?? 0,
-    'slaapkamers' => $_GET['slaapkamers'] ?? 0,
-    'badkamers' => $_GET['badkamers'] ?? 0,
+    'min_area' => isset($_GET['min_area']) ? (int)$_GET['min_area'] : 0,
+    'max_area' => isset($_GET['max_area']) ? (int)$_GET['max_area'] : 0,
+    'kamers' => isset($_GET['kamers']) ? (int)$_GET['kamers'] : 0,
+    'slaapkamers' => isset($_GET['slaapkamers']) ? (int)$_GET['slaapkamers'] : 0,
+    'badkamers' => isset($_GET['badkamers']) ? (int)$_GET['badkamers'] : 0,
 ];
 
-// --- Fetch Filtered Villas ---
+// --- Fetch Filter Options ---
 $filterHandler = new Filter($filters);
+$featureOptions = $filterHandler->getFeatureOptions();
+$locationOptions = $filterHandler->getLocationOptions();
+
+// --- Fetch Filtered Villas ---
 $properties = $filterHandler->getFilteredVillas();
 
 // If no filters are applied, get all villas
 if (empty($filters['zoekterm']) && 
-    $filters['min_price'] == 10000 && 
-    $filters['max_price'] == 10000000 && 
-    empty($filters['faciliteiten']) && 
+    $filters['min_price'] == 0 && 
+    $filters['max_price'] == 0 && 
+    empty($filters['eigenschappen']) && 
     empty($filters['ligging']) && 
-    $filters['min_area'] == 10 && 
-    $filters['max_area'] == 1000 && 
+    $filters['min_area'] == 0 && 
+    $filters['max_area'] == 0 && 
     $filters['kamers'] == 0 && 
     $filters['slaapkamers'] == 0 && 
     $filters['badkamers'] == 0) {
@@ -56,19 +60,22 @@ if (empty($filters['zoekterm']) &&
     $db = new Database();
     $conn = $db->getConnection();
     
-    // Fetch all villas with their images and labels
+    // Fetch all villas with their images, features and locations
     $query = "SELECT v.*, 
               (SELECT vi.image_path 
                FROM villa_images vi 
                WHERE vi.villa_id = v.id 
                LIMIT 1) as image,
-              GROUP_CONCAT(l.naam SEPARATOR ', ') as tags
+              (SELECT GROUP_CONCAT(fo.name SEPARATOR ', ') 
+               FROM villa_feature_options vfo
+               JOIN feature_options fo ON vfo.option_id = fo.id
+               WHERE vfo.villa_id = v.id) as features,
+              (SELECT GROUP_CONCAT(lo.name SEPARATOR ', ') 
+               FROM villa_location_options vlo
+               JOIN location_options lo ON vlo.option_id = lo.id
+               WHERE vlo.villa_id = v.id) as locations
               FROM villas v 
-              LEFT JOIN villa_labels vl ON v.id = vl.villa_id 
-              LEFT JOIN labels l ON vl.label_id = l.id 
-              GROUP BY v.id, v.straat, v.post_c, v.kamers, 
-                       v.badkamers, v.slaapkamers, v.oppervlakte, 
-                       v.prijs, v.featured";
+              GROUP BY v.id";
               
     $stmt = $conn->prepare($query);
     $stmt->execute();
@@ -76,99 +83,134 @@ if (empty($filters['zoekterm']) &&
 }
 
 // Add after database connection and before formatting properties
-$itemsPerPage = 4;
-$currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$itemsPerPage = 6;
+$currentPage = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $totalItems = count($properties);
-$totalPages = ceil($totalItems / $itemsPerPage);
+$totalPages = $totalItems > 0 ? ceil($totalItems / $itemsPerPage) : 1;
 $offset = ($currentPage - 1) * $itemsPerPage;
 
 // Slice the properties array for pagination
-$properties = array_slice($properties, $offset, $itemsPerPage);
+$paginatedProperties = array_slice($properties, $offset, $itemsPerPage);
 
 // --- Format Data for Display ---
 $formattedProperties = [];
-foreach ($properties as $row) {
+foreach ($paginatedProperties as $row) {
+    // Combine address parts correctly
+    $addressParts = array_filter([$row['straat'], $row['post_c'], $row['plaatsnaam']]);
+    $address = implode(', ', $addressParts);
+
+    // Determine image path (handle potential relative paths from DB)
+    $imagePath = '../../assets/img/default-villa.jpg'; // Default image
+    if (!empty($row['image'])) {
+        // Use the path relative to the current script location for the <img> tag
+        $imagePath = htmlspecialchars($row['image']); // Path for img src
+    }
+
     $formattedProperties[] = [
-        'image' => !empty($row['image']) ? '../uploads/' . basename($row['image']) : '../../assets/img/default.png', // Adjust path and check existence
-        'address' => $row['straat'] . ', ' . $row['post_c'],
-        'price' => '€ ' . number_format($row['prijs'], 0, ',', '.'), // Format without decimals
-        'tags' => !empty($row['tags']) ? explode(', ', $row['tags']) : [],
-        'size' => $row['oppervlakte'] . 'm²'
+        'id' => $row['id'],
+        'image' => $imagePath,
+        'title' => htmlspecialchars($row['titel']),
+        'address' => htmlspecialchars($address),
+        'price' => '€ ' . number_format($row['prijs'], 0, ',', '.'),
+        'features' => !empty($row['features']) ? explode(', ', $row['features']) : [],
+        'locations' => !empty($row['locations']) ? explode(', ', $row['locations']) : [],
+        'size' => htmlspecialchars($row['oppervlakte']) . 'm²',
+        'rooms' => $row['kamers'],
+        'bedrooms' => $row['slaapkamers'],
+        'bathrooms' => $row['badkamers']
     ];
 }
 
-// Define labels for the filter sections
-$faciliteitenLabels = ['Zwembad', 'Winkels in de buurt', 'Entertainment in de buurt', 'Op een privépark'];
-$liggingLabels = ['Bij het bos', 'Aan het water', 'Bij de stad', 'In het heuvelland'];
+// Build query string for pagination links, preserving filters
+$queryParams = $_GET;
+if (isset($queryParams['page'])) {
+    unset($queryParams['page']); // Remove existing page parameter
+}
+$queryString = http_build_query($queryParams);
+$queryString = preg_replace('/%5B\d+%5D/', '%5B%5D', $queryString);
+
+// Add a proper separator for the URL
+$separator = !empty($queryString) ? '&' : '';
 
 ?>
 
 <div class="container">
     <aside class="filters">
+        <h3>Filters</h3>
         <form id="filter-form" method="GET" action="woningen.php">
             <div class="search-bar">
-                <input type="text" name="zoekterm" placeholder="zoeken" value="<?= htmlspecialchars($filters['zoekterm']) ?>">
+                <input type="text" name="zoekterm" placeholder="Zoek op titel, adres, postcode..." value="<?= htmlspecialchars($filters['zoekterm']) ?>">
                 <button type="submit" class="search-button">Zoek</button>
             </div>
+            
             <div class="filter-section">
-                <h3>Filters</h3>
                 <h4>Prijs (€)</h4>
                 <div class="price-range">
-                    <span id="price-display">€<?= number_format($filters['min_price']) ?> - €<?= number_format($filters['max_price']) ?></span>
+                    <span id="price-display">
+                    </span>
                     <div class="slider-container">
-                        <input type="range" id="price-slider-min" name="min_price" min="10000" max="10000000" step="1000" value="<?= htmlspecialchars($filters['min_price']) ?>">
-                        <input type="range" id="price-slider-max" name="max_price" min="10000" max="10000000" step="1000" value="<?= htmlspecialchars($filters['max_price']) ?>">
+                        <label for="price-slider-min" class="sr-only">Min Prijs</label>
+                        <input type="range" id="price-slider-min" name="min_price" min="0" max="5000000" step="10000" value="<?= htmlspecialchars($filters['min_price'] ?: 0) ?>">
+                        <label for="price-slider-max" class="sr-only">Max Prijs</label>
+                        <input type="range" id="price-slider-max" name="max_price" min="0" max="5000000" step="10000" value="<?= htmlspecialchars($filters['max_price'] ?: 5000000) ?>">
                     </div>
                 </div>
-                <h4>Woning met:</h4>
+                
+                <h4>Eigenschappen</h4>
                 <ul>
-                    <?php foreach ($faciliteitenLabels as $label): ?>
+                    <?php foreach ($featureOptions as $option): ?>
                         <li>
                             <label>
-                                <input type="checkbox" name="faciliteiten[]" value="<?= $label ?>" <?= in_array($label, $filters['faciliteiten']) ? 'checked' : '' ?>> 
-                                <?= $label ?>
+                                <input type="checkbox" name="eigenschappen[]" value="<?= htmlspecialchars($option['name']) ?>" <?= in_array($option['name'], $filters['eigenschappen']) ? 'checked' : '' ?>> 
+                                <?= htmlspecialchars($option['name']) ?>
                             </label>
                         </li>
                     <?php endforeach; ?>
                 </ul>
+
                 <h4>Ligging</h4>
                 <ul>
-                    <?php foreach ($liggingLabels as $label): ?>
+                     <?php foreach ($locationOptions as $option): ?>
                         <li>
                             <label>
-                                <input type="checkbox" name="ligging[]" value="<?= $label ?>" <?= in_array($label, $filters['ligging']) ? 'checked' : '' ?>> 
-                                <?= $label ?>
+                                <input type="checkbox" name="ligging[]" value="<?= htmlspecialchars($option['name']) ?>" <?= in_array($option['name'], $filters['ligging']) ? 'checked' : '' ?>> 
+                                <?= htmlspecialchars($option['name']) ?>
                             </label>
                         </li>
                     <?php endforeach; ?>
                 </ul>
+
                 <div class="area-range">
-                    <h4>m²</h4>
-                    <span id="area-display"><?= htmlspecialchars($filters['min_area']) ?>m² - <?= htmlspecialchars($filters['max_area']) ?>m²</span>
-                    <div class="slider-container">
-                        <input type="range" id="area-slider-min" name="min_area" min="10" max="1000" step="10" value="<?= htmlspecialchars($filters['min_area']) ?>">
-                        <input type="range" id="area-slider-max" name="max_area" min="10" max="1000" step="10" value="<?= htmlspecialchars($filters['max_area']) ?>">
+                    <h4>Oppervlakte (m²)</h4>
+                     <span id="area-display">
+                     </span>
+                     <div class="slider-container">
+                         <label for="area-slider-min" class="sr-only">Min Oppervlakte</label>
+                         <input type="range" id="area-slider-min" name="min_area" min="0" max="1000" step="10" value="<?= htmlspecialchars($filters['min_area'] ?: 0) ?>">
+                         <label for="area-slider-max" class="sr-only">Max Oppervlakte</label>
+                         <input type="range" id="area-slider-max" name="max_area" min="0" max="1000" step="10" value="<?= htmlspecialchars($filters['max_area'] ?: 1000) ?>">
                     </div>
                 </div>
+
                 <div class="properties">
-                    <h4>Eigenschappen</h4>
-                    <div class="rooms stepper">
-                        Kamers: 
-                        <button type="button" class="stepper-minus" data-target="kamers-input">-</button>
+                    <h4>Aantal</h4>
+                    <div class="stepper">
+                        <label for="kamers-input">Kamers:</label> 
+                        <button type="button" class="stepper-minus" data-target="kamers-input" aria-label="Minder kamers">-</button>
                         <input type="number" name="kamers" id="kamers-input" value="<?= htmlspecialchars($filters['kamers']) ?>" min="0" readonly>
-                        <button type="button" class="stepper-plus" data-target="kamers-input">+</button>
+                        <button type="button" class="stepper-plus" data-target="kamers-input" aria-label="Meer kamers">+</button>
                     </div>
-                    <div class="bedrooms stepper">
-                        Slaapkamers: 
-                        <button type="button" class="stepper-minus" data-target="slaapkamers-input">-</button>
-                        <input type="number" name="slaapkamers" id="slaapkamers-input" value="<?= htmlspecialchars($filters['slaapkamers']) ?>" min="0" readonly>
-                        <button type="button" class="stepper-plus" data-target="slaapkamers-input">+</button>
+                    <div class="stepper">
+                         <label for="slaapkamers-input">Slaapkamers:</label> 
+                         <button type="button" class="stepper-minus" data-target="slaapkamers-input" aria-label="Minder slaapkamers">-</button>
+                         <input type="number" name="slaapkamers" id="slaapkamers-input" value="<?= htmlspecialchars($filters['slaapkamers']) ?>" min="0" readonly>
+                         <button type="button" class="stepper-plus" data-target="slaapkamers-input" aria-label="Meer slaapkamers">+</button>
                     </div>
-                    <div class="bathrooms stepper">
-                        Badkamers: 
-                        <button type="button" class="stepper-minus" data-target="badkamers-input">-</button>
+                    <div class="stepper">
+                        <label for="badkamers-input">Badkamers:</label> 
+                        <button type="button" class="stepper-minus" data-target="badkamers-input" aria-label="Minder badkamers">-</button>
                         <input type="number" name="badkamers" id="badkamers-input" value="<?= htmlspecialchars($filters['badkamers']) ?>" min="0" readonly>
-                        <button type="button" class="stepper-plus" data-target="badkamers-input">+</button>
+                        <button type="button" class="stepper-plus" data-target="badkamers-input" aria-label="Meer badkamers">+</button>
                     </div>
                 </div>
                 <button type="submit" class="filter-submit-btn">Pas Filters Toe</button>
@@ -181,39 +223,60 @@ $liggingLabels = ['Bij het bos', 'Aan het water', 'Bij de stad', 'In het heuvell
         <?php if (!empty($formattedProperties)): ?>
             <?php foreach ($formattedProperties as $property): ?>
                 <div class="property-card">
-                    <img src="<?= htmlspecialchars($property['image']); ?>" alt="Property Image">
-                    <h3><?= htmlspecialchars($property['address']); ?></h3>
-                    <p class="price"><?= $property['price']; ?></p>
-                    <div class="tags">
-                        <?php foreach ($property['tags'] as $tag): ?>
-                            <span class="tag"><?= htmlspecialchars($tag); ?></span>
-                        <?php endforeach; ?>
-                    </div>
-                    <p class="size"><?= $property['size']; ?></p>
-                    <a href="#" class="view-more">Bekijk meer →</a>
+                    <a href="detailview.php?id=<?= $property['id'] ?>" class="card-link-wrapper">
+                        <img src="<?= $property['image']; ?>" alt="<?= $property['title']; ?>">
+                        <div class="card-content">
+                            <h3><?= $property['title']; ?></h3>
+                            <p class="address"><?= $property['address']; ?></p>
+                            <p class="price"><?= $property['price']; ?></p>
+                            <div class="features-summary">
+                                <span><i class="icon-bed"></i> <?= $property['bedrooms'] ?> slpk</span>
+                                <span><i class="icon-bath"></i> <?= $property['bathrooms'] ?> badk</span>
+                                <span><i class="icon-area"></i> <?= $property['size']; ?></span>
+                            </div>
+                            <div class="tags">
+                                <?php 
+                                // Combine features and locations for tags, limit display if needed
+                                $allTags = array_merge($property['features'], $property['locations']);
+                                $tagsToShow = array_slice($allTags, 0, 3); // Show max 3 tags initially
+                                ?>
+                                <?php foreach ($tagsToShow as $tag): ?>
+                                    <span class="tag"><?= htmlspecialchars($tag); ?></span>
+                                <?php endforeach; ?>
+                                <?php if (count($allTags) > 3): ?>
+                                    <span class="tag more-tags">+<?= count($allTags) - 3 ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <span class="view-more">Bekijk details →</span>
+                        </div>
+                    </a>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <p class="no-results">Geen woningen gevonden die aan uw criteria voldoen.</p>
+            <p class="no-results">Geen woningen gevonden die aan uw criteria voldoen. Probeer uw filters aan te passen.</p>
         <?php endif; ?>
 
-        <?php if (!empty($formattedProperties)): ?>
-            <div class="end-list">einde lijst</div>
-            <div class="pagination-arrows">
-                <?php if ($currentPage > 1): ?>
-                    <a href="?page=<?= $currentPage - 1 ?><?= !empty($_GET['zoekterm']) ? '&zoekterm=' . htmlspecialchars($_GET['zoekterm']) : '' ?>" class="pagination-arrow">←</a>
-                <?php else: ?>
-                    <span class="pagination-arrow disabled">←</span>
-                <?php endif; ?>
-                
-                <span>Pagina <?= $currentPage ?> van <?= $totalPages ?></span>
-                
-                <?php if ($currentPage < $totalPages): ?>
-                    <a href="?page=<?= $currentPage + 1 ?><?= !empty($_GET['zoekterm']) ? '&zoekterm=' . htmlspecialchars($_GET['zoekterm']) : '' ?>" class="pagination-arrow">→</a>
-                <?php else: ?>
-                    <span class="pagination-arrow disabled">→</span>
-                <?php endif; ?>
+        <?php if ($totalPages > 1): ?>
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Pagina <?= $currentPage ?> van <?= $totalPages ?> (<?= $totalItems ?> resultaten)
+                </div>
+                 <div class="pagination-arrows">
+                    <?php if ($currentPage > 1): ?>
+                        <a href="?<?= $queryString . $separator ?>page=<?= $currentPage - 1 ?>" class="pagination-arrow prev" aria-label="Vorige pagina">← Vorige</a>
+                    <?php else: ?>
+                        <span class="pagination-arrow disabled prev">← Vorige</span>
+                    <?php endif; ?>
+                    
+                    <?php if ($currentPage < $totalPages): ?>
+                        <a href="?<?= $queryString . $separator ?>page=<?= $currentPage + 1 ?>" class="pagination-arrow next" aria-label="Volgende pagina">Volgende →</a>
+                    <?php else: ?>
+                        <span class="pagination-arrow disabled next">Volgende →</span>
+                    <?php endif; ?>
+                 </div>
             </div>
+        <?php elseif (!empty($formattedProperties)): ?>
+             <div class="end-list">einde lijst</div>
         <?php endif; ?>
     </main>
 </div>
