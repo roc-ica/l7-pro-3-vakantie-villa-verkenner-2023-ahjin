@@ -1,0 +1,315 @@
+/* === Admin Form Styles === */
+
+/* Form Containers and Sections */
+.form-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    max-width: 100%; /* Prevent overflow */
+    overflow-x: hidden; /* Hide horizontal scrollbar if needed */
+}
+
+.form-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.form-section h3 {
+    color: #34495e;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* Form Layout Helpers */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Gap between columns */
+    margin-bottom: 15px;
+}
+
+.form-group {
+    flex: 1; /* Default to taking available space */
+    min-width: 150px; /* Prevent excessive shrinking */
+    margin-bottom: 15px; /* Spacing below individual groups */
+}
+
+.form-row .form-group {
+    margin-bottom: 0; /* Remove margin when inside a row */
+}
+
+.form-group-full {
+    width: 100%;
+    flex-basis: 100%;
+}
+
+.form-group-half {
+    flex-basis: calc(50% - 10px); /* Adjust for gap */
+}
+
+.form-group-third {
+    flex-basis: calc(33.333% - 14px); /* Adjust for gap */
+}
+
+.form-group-quarter {
+    flex-basis: calc(25% - 15px); /* Adjust for gap */
+}
+
+
+/* Form Elements: Labels, Inputs, Textareas, Selects */
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="file"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group small {
+    display: block;
+    color: #777;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+/* Checkboxes and Radio Buttons */
+.checkbox-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.checkbox-item, .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-item input[type="checkbox"],
+.radio-item input[type="radio"] {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.checkbox-item label,
+.radio-item label {
+    font-weight: normal;
+    color: #333;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.checkbox-group label { /* Specific label for single checkbox */
+    margin-bottom: 0;
+    margin-left: 5px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+/* Image Management Styles */
+.image-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.image-preview-item {
+    border: 1px solid #eee;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    position: relative;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-actions {
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f2f2f2;
+    font-size: 0.8rem;
+}
+
+.main-image-label,
+.delete-image-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.main-image-label input[type="radio"],
+.delete-image-label input[type="checkbox"] {
+    margin: 0;
+}
+
+.main-image-label i {
+    color: #f39c12; /* Gold */
+}
+
+.delete-image-label i {
+    color: #e74c3c; /* Red */
+}
+
+/* Form Actions/Buttons */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+/* Responsive Adjustments for Forms */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0; /* Remove gap for stacking */
+        margin-bottom: 0;
+    }
+
+    .form-group-half,
+    .form-group-third,
+    .form-group-quarter {
+        flex-basis: 100%;
+        min-width: 100%;
+    }
+
+    .form-group {
+         margin-bottom: 15px; /* Ensure spacing when stacked */
+    }
+
+    .checkbox-list {
+        grid-template-columns: 1fr; /* Stack checkboxes */
+    }
+
+    .image-management-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    border: none;
+    font-size: 14px;
+}
+
+.btn i {
+    margin-right: 6px;
+}
+
+.btn-save {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-save:hover {
+    background-color: #3e9142;
+}
+
+.btn-cancel {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.btn-cancel:hover {
+    background-color: #e0e0e0;
+}
+
+.btn-back {
+    background-color: transparent;
+    color: #0077cc;
+    padding: 6px 10px;
+}
+
+.btn-back:hover {
+    background-color: rgba(0, 119, 204, 0.1);
+}
+
+/* Error/Success Messages */
+.error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #c62828;
+}
+
+.success-message {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #2e7d32;
+} 
