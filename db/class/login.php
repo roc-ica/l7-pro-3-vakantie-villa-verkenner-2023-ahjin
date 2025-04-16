@@ -10,37 +10,48 @@ class Login {
 
     public function __construct(PDO $conn, string $username, string $password) {
         $this->conn = $conn;
-        $this->username = $username;
+        $this->username = htmlspecialchars(strip_tags($username));
         $this->password = $password;
     }
 
-    private function handleLogin($username, $password) {
+    private function handleLogin(string $username, string $password): array {
         try {
             // Prepare statement to find admin by username
-            $stmt = $this->conn->prepare("SELECT * FROM admin WHERE username = :username LIMIT 1");
-            $stmt->execute(['username' => $username]);
+            $stmt = $this->conn->prepare("SELECT id, username, password FROM admin WHERE username = :username LIMIT 1");
+            $stmt->execute([':username' => $username]);
             $admin = $stmt->fetch(PDO::FETCH_ASSOC);
             
             // Check if admin exists and password is correct
             if ($admin && password_verify($password, $admin['password'])) {
-                // Create a session ID and update the admin record
-                $session_id = session_create_id();
                 
-                $updateStmt = $this->conn->prepare("UPDATE admin SET session_id = :session_id WHERE id = :id");
-                $updateStmt->execute([
-                    ':session_id' => $session_id,
-                    ':id' => $admin['id']
-                ]);
+                // Start session and store admin info using SessionManager
+                $sessionManager = new SessionManager();
+                $sessionStarted = $sessionManager->startAdminSession($admin['id'], $admin['username']); 
                 
-                // Start session for the admin
-                $session = new SessionManager($this->conn, $username, time());
-                $session->SessionS();
-                
-                return [
-                    "success" => true,
-                    "message" => "Login successful"
-                ];
+                if ($sessionStarted) {
+                    // Log the login activity (optional, can be in SessionManager too)
+                     try {
+                         $logStmt = $this->conn->prepare("INSERT INTO login_activity (username, login_time) VALUES (:username, NOW())");
+                         $logStmt->execute([':username' => $admin['username']]);
+                     } catch (PDOException $logError) {
+                         error_log("Login activity logging failed: " . $logError->getMessage());
+                         // Don't stop login if logging fails
+                     }
+                    
+                    return [
+                        "success" => true,
+                        "message" => "Login successful"
+                    ];
+                } else {
+                     error_log("Failed to start admin session for user: " . $username);
+                    return [
+                        "success" => false,
+                        "message" => "Session could not be started."
+                    ];
+                }
+
             } else {
+                // Invalid username or password
                 return [
                     "success" => false,
                     "message" => "Invalid username or password"
@@ -55,23 +66,18 @@ class Login {
         }
     }
 
-    private function isLoggedIn() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        return isset($_SESSION['username']);
+    public static function isAdminLoggedIn(): bool {
+        return SessionManager::validateAdminSession();
     }
 
-    public function login() {
-        if (!$this->isLoggedIn()) {
-            return $this->handleLogin($this->username, $this->password);
-        } else {
-            return [
+    public function login(): array {
+        if (self::isAdminLoggedIn()) {
+             return [
                 "success" => true,
                 "message" => "User is already logged in"
             ];
         }
+        return $this->handleLogin($this->username, $this->password);
     }
     
 }

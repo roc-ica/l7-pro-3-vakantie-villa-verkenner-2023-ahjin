@@ -16,7 +16,7 @@ a {
 /* Hero Section with Navbar */
 .hero {
     position: relative;
-    min-height: 600px;
+    min-height: 100px;
     overflow: hidden;
   }
   

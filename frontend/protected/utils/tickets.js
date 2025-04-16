@@ -1,64 +1,97 @@
 document.addEventListener('DOMContentLoaded', function() {
-   /*
+    console.log('Tickets.js script loaded successfully');
+    
+    /*
     =========================================
     TICKETS PAGE FUNCTIONALITY
     ========================================= 
     */
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    if (filterButtons.length > 0) {
-        filterButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remove active class from all buttons
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    // Ticket status filter
+    const statusFilters = document.querySelectorAll('.status-filter');
+    const ticketsSearchBox = document.getElementById('ticketsSearch');
+    
+    console.log('Filter buttons found:', statusFilters.length);
+    
+    // Function to update ticket visibility based on status and search
+    function updateTicketVisibility() {
+        const activeFilter = document.querySelector('.status-filter.active');
+        const statusFilter = activeFilter ? activeFilter.getAttribute('data-status') : 'all';
+        const searchTerm = ticketsSearchBox ? ticketsSearchBox.value.toLowerCase() : '';
+        
+        console.log('Filtering by status:', statusFilter);
+        
+        const rows = document.querySelectorAll('.tickets-table tbody tr');
+        console.log('Found rows to filter:', rows.length);
+        
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            // Skip header row if it somehow got selected
+            if (row.parentElement.tagName === 'THEAD') return;
+            
+            // Skip "no tickets found" row
+            if (row.cells && row.cells.length === 1 && row.cells[0].colSpan === 7) return;
+            
+            const rowStatus = row.getAttribute('data-status') || '';
+            const rowText = row.textContent.toLowerCase();
+            
+            let showRow = true;
+            
+            // Filter by status if not 'all'
+            if (statusFilter !== 'all' && rowStatus !== statusFilter) {
+                // Special handling for "in behandeling" which might be stored as "in-progress" in some rows
+                if (!(statusFilter === 'in behandeling' && (rowStatus === 'in-progress' || rowStatus === 'in behandeling'))) {
+                    showRow = false;
+                }
+            }
+            
+            // Filter by search term if present
+            if (searchTerm && !rowText.includes(searchTerm)) {
+                showRow = false;
+            }
+            
+            row.style.display = showRow ? '' : 'none';
+            if (showRow) visibleCount++;
+            
+            console.log('Row:', row.querySelector('td:first-child')?.textContent, 'Status:', rowStatus, 'Visible:', showRow);
+        });
+        
+        console.log('Visible rows after filtering:', visibleCount);
+    }
+    
+    // Set up status filters - adding event listeners
+    if (statusFilters.length > 0) {
+        statusFilters.forEach(filter => {
+            const status = filter.getAttribute('data-status');
+            console.log('Setting up filter for status:', status);
+            
+            filter.addEventListener('click', function() {
+                console.log('Filter clicked:', status);
                 
-                // Add active class to clicked button
+                // Remove active class from all filters
+                statusFilters.forEach(f => f.classList.remove('active'));
+                
+                // Add active class to clicked filter
                 this.classList.add('active');
                 
-                const filter = this.getAttribute('data-filter');
-                
-                // Filter the table rows
-                const rows = document.querySelectorAll('.tickets-table tbody tr');
-                rows.forEach(row => {
-                    if (filter === 'all') {
-                        row.style.display = '';
-                    } else {
-                        const status = row.getAttribute('data-status');
-                        if (filter === status) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    }
-                });
+                // Update visibility
+                updateTicketVisibility();
             });
         });
     }
     
-    const ticketsSearchBox = document.querySelector('.tickets-container .search-box');
+    // Set up search box
     if (ticketsSearchBox) {
-        ticketsSearchBox.addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('.tickets-table tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+        console.log('Search box found, setting up event listener');
+        ticketsSearchBox.addEventListener('input', function() {
+            console.log('Search term:', this.value);
+            updateTicketVisibility();
         });
     }
     
-    //kan weg als we zeker weten dat er sws altijd de klas bestaat
-    const viewButtons = document.querySelectorAll('.view-btn');
-    if (viewButtons.length > 0) {
-        viewButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                alert('details.');
-            });
-        });
-    }
+    // We don't need to handle view buttons here anymore as they're now regular links
     
+    // Initialize filtering
+    console.log('Initializing filtering');
+    updateTicketVisibility();
 });

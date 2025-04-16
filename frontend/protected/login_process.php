@@ -2,9 +2,10 @@
 // Turn off output buffering to prevent headers already sent errors
 ob_start();
 
-session_start();
+// session_start(); // Removed this line
 require_once __DIR__ . '/../../db/class/database.php';
 require_once __DIR__ . '/../../db/class/login.php';
+require_once __DIR__ . '/../../db/class/sessions.php';
 
 // Create a debug log file
 $logFile = __DIR__ . '/login_debug.log';
@@ -16,25 +17,26 @@ ini_set('display_errors', 0); // Don't display errors to browser
 ini_set('log_errors', 1);
 ini_set('error_log', $logFile);
 
-// Validate that the request is POST
+// Check if the request method is POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Invalid request method: {$_SERVER['REQUEST_METHOD']}\n", FILE_APPEND);
     header('Location: login.php?error=invalid_request');
     exit;
 }
 
-// Log received data (without password)
-file_put_contents($logFile, date('Y-m-d H:i:s') . " - Received username: " . (isset($_POST['username']) ? $_POST['username'] : 'not set') . "\n", FILE_APPEND);
+// Get username and password from POST data
+$username = trim($_POST['username'] ?? '');
+$password = trim($_POST['password'] ?? '');
 
-// Check if username and password are provided
-if (empty($_POST['username']) || empty($_POST['password'])) {
+// Log received data (without password)
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - Received username: " . (isset($username) ? $username : 'not set') . "\n", FILE_APPEND);
+
+// Basic validation: check if username and password are provided
+if (empty($username) || empty($password)) {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Missing fields\n", FILE_APPEND);
     header('Location: login.php?error=missing_fields');
     exit;
 }
-
-$username = trim($_POST['username']);
-$password = $_POST['password'];
 
 // Initialize database connection
 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Initializing database connection\n", FILE_APPEND);
@@ -43,28 +45,33 @@ $conn = $db->getConnection();
 
 if (!$conn) {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Database connection failed\n", FILE_APPEND);
-    header('Location: login.php?error=db_connection');
+    error_log("Login process: Database connection failed.");
+    header('Location: login.php?error=dberror');
     exit;
 }
 
 try {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Creating login instance\n", FILE_APPEND);
     // Create login instance and attempt login
-    $login = new Login($conn, $username, $password);
+    $loginHandler = new Login($conn, $username, $password);
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Attempting login\n", FILE_APPEND);
-    $result = $login->login();
+    $loginResult = $loginHandler->login();
     
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Login result: " . json_encode($result) . "\n", FILE_APPEND);
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Login result: " . json_encode($loginResult) . "\n", FILE_APPEND);
     
-    if ($result['success']) {
+    if ($loginResult['success']) {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - Login successful, redirecting to dashboard\n", FILE_APPEND);
         // Redirect to dashboard on successful login
         header('Location: admin.php');
         exit;
     } else {
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Login failed: " . $result['message'] . "\n", FILE_APPEND);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Login failed: " . $loginResult['message'] . "\n", FILE_APPEND);
         // Redirect back to login with error
-        header('Location: login.php?error=invalid_credentials');
+        if ($loginResult['message'] === 'Database error during login') {
+            header('Location: login.php?error=dberror');
+        } else {
+            header('Location: login.php?error=invalid'); // Invalid credentials
+        }
         exit;
     }
 } catch (Exception $e) {
