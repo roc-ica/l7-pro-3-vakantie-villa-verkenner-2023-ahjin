@@ -13,10 +13,93 @@ class Filter {
         $this->filters = $filters; // Expecting an associative array of filters
     }
 
+    private function buildSearchTermCondition($zoekterm, &$params) {
+        if (empty($zoekterm)) {
+            return "";
+        }
+        
+        // Log the search term
+        error_log("Search term in buildSearchTermCondition: " . $zoekterm);
+        
+        // Expanded search condition to include address fields
+        $condition = "(v.titel LIKE :zoekterm OR v.beschrijving LIKE :zoekterm OR v.straat LIKE :zoekterm OR v.post_c LIKE :zoekterm OR v.plaatsnaam LIKE :zoekterm)";
+        $params[':zoekterm'] = '%' . $zoekterm . '%';
+        
+        return $condition;
+    }
+
     public function getFilteredVillas() {
+        // Debug the filters
+        error_log("Filter inputs: " . print_r($this->filters, true));
+        
         if ($this->conn === null) {
             error_log("Filter class: Database connection failed.");
             return []; // Return empty array if connection fails
+        }
+
+        // Special case for direct title searches - prioritize name searches
+        if (!empty($this->filters['zoekterm']) && strlen($this->filters['zoekterm']) > 3) {
+            // First try a direct search with just the search term
+            $directSearchSql = "SELECT DISTINCT v.*, 
+                   (SELECT GROUP_CONCAT(fo.name SEPARATOR ', ') 
+                    FROM feature_options fo
+                    JOIN villa_feature_options vfo ON fo.id = vfo.option_id 
+                    WHERE vfo.villa_id = v.id) AS features,
+                   (SELECT GROUP_CONCAT(lo.name SEPARATOR ', ') 
+                    FROM location_options lo
+                    JOIN villa_location_options vlo ON lo.id = vlo.option_id 
+                    WHERE vlo.villa_id = v.id) AS locations,
+                   (SELECT image_path 
+                    FROM villa_images 
+                    WHERE villa_id = v.id AND is_hoofdfoto = 1 LIMIT 1) AS main_image,
+                   (SELECT image_path 
+                    FROM villa_images 
+                    WHERE villa_id = v.id LIMIT 1) AS any_image
+                FROM villas v
+                WHERE (v.titel LIKE :search 
+                       OR v.straat LIKE :search 
+                       OR v.post_c LIKE :search 
+                       OR v.plaatsnaam LIKE :search)";
+            
+            try {
+                $directStmt = $this->conn->prepare($directSearchSql);
+                $directStmt->execute([':search' => '%' . $this->filters['zoekterm'] . '%']);
+                $directResults = $directStmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                error_log("Direct search for '" . $this->filters['zoekterm'] . "' found " . count($directResults) . " results");
+                
+                // If we found exact matches, return them - prioritize direct name matches
+                if (count($directResults) > 0) {
+                    // Assign the correct image path
+                    foreach ($directResults as &$row) {
+                        $row['image'] = $row['main_image'] ?? $row['any_image'];
+                        unset($row['main_image'], $row['any_image']); // Clean up temporary columns
+                    }
+                    unset($row); // Unset reference
+                    
+                    return $directResults;
+                }
+            } catch (PDOException $e) {
+                error_log("Error in direct search query: " . $e->getMessage());
+                // Continue with regular search if direct search fails
+            }
+        }
+
+        // Check specifically for Biarodpas search
+        if (!empty($this->filters['zoekterm']) && 
+            stripos($this->filters['zoekterm'], 'biarodpas') !== false) {
+            error_log("Special case: Searching for Biarodpas. Area filter may affect results.");
+            
+            // Check if we're filtering by area that would exclude Biarodpas
+            if (!empty($this->filters['max_area']) && $this->filters['max_area'] < 1200) {
+                error_log("Warning: max_area filter set to " . $this->filters['max_area'] . " which is less than Biarodpas (1200m²)");
+                
+                // Direct query to check Biarodpas villa
+                $debugStmt = $this->conn->prepare("SELECT id, titel, oppervlakte FROM villas WHERE titel LIKE :term");
+                $debugStmt->execute([':term' => '%Biarodpas%']);
+                $debugResults = $debugStmt->fetchAll(PDO::FETCH_ASSOC);
+                error_log("Biarodpas villa details: " . print_r($debugResults, true));
+            }
         }
 
         // Base query - Selecting necessary columns including the new ones
@@ -79,8 +162,10 @@ class Filter {
 
         // Search Term (in titel, straat, postcode, or plaatsnaam)
         if (!empty($this->filters['zoekterm'])) {
-            $whereClauses[] = "(v.titel LIKE :zoekterm OR v.straat LIKE :zoekterm OR v.post_c LIKE :zoekterm OR v.plaatsnaam LIKE :zoekterm)";
-            $params[':zoekterm'] = '%' . $this->filters['zoekterm'] . '%';
+            $searchCondition = $this->buildSearchTermCondition($this->filters['zoekterm'], $params);
+            if (!empty($searchCondition)) {
+                $whereClauses[] = $searchCondition;
+            }
         }
 
         // Feature Options (Eigenschappen) - Assuming checkbox values are option names
@@ -142,17 +227,33 @@ class Filter {
         }
 
         // --- Add GROUP BY if options were filtered to avoid duplicates --- 
-         if (in_array('features', $joins) || in_array('locations', $joins)) {
-             $sql .= " GROUP BY v.id"; // Group by main villa table columns to ensure distinct villas
-         }
+        if (in_array('features', $joins) || in_array('locations', $joins)) {
+            $sql .= " GROUP BY v.id"; // Group by main villa table columns to ensure distinct villas
+        }
 
-        // --- Optional: Add ORDER BY or LIMIT clauses here if needed --- 
-        // $sql .= " ORDER BY v.prijs ASC";
+        // Always add explicit ORDER BY to ensure consistent results
+        $sql .= " ORDER BY v.id ASC";
+
+        // Log the complete SQL query and parameters for debugging
+        error_log("Generated SQL query: " . $sql);
+        error_log("Query params: " . print_r($params, true));
 
         try {
             $stmt = $this->conn->prepare($sql);
             $stmt->execute($params);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Debug the raw results
+            error_log("Query returned " . count($results) . " results");
+            if (count($results) === 0 && !empty($this->filters['zoekterm'])) {
+                error_log("No results found for search term: " . $this->filters['zoekterm']);
+                // Perform a direct query to check if the term exists at all
+                $debugQuery = "SELECT id, titel FROM villas WHERE titel LIKE :term";
+                $debugStmt = $this->conn->prepare($debugQuery);
+                $debugStmt->execute([':term' => '%' . $this->filters['zoekterm'] . '%']);
+                $debugResults = $debugStmt->fetchAll(PDO::FETCH_ASSOC);
+                error_log("Direct title check found " . count($debugResults) . " matches: " . print_r($debugResults, true));
+            }
             
             // Assign the correct image path (main or fallback)
             foreach ($results as &$row) {

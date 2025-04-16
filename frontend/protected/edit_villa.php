@@ -52,12 +52,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     if ($conn) {
         try {
             // Fetch villa details
-            $stmt = $conn->prepare("SELECT * FROM villas WHERE id = :id");
+    $stmt = $conn->prepare("SELECT * FROM villas WHERE id = :id");
             $stmt->bindParam(':id', $villaId, PDO::PARAM_INT);
             $stmt->execute();
-            $villa = $stmt->fetch(PDO::FETCH_ASSOC);
+    $villa = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$villa) {
+    if (!$villa) {
                 header("Location: villas.php?error=notfound");
                 exit;
             }
@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_villa'])) {
                 // --- Handle New Image Uploads ---
                  $uploadDir = __DIR__ . '/../uploads/'; // Absolute path for moving files
                  $dbPathPrefix = 'uploads/'; // Relative path to store in DB
-                 if (!is_dir($uploadDir)) {
+            if (!is_dir($uploadDir)) {
                      mkdir($uploadDir, 0775, true); // Use 0775 for permissions
                  }
 
@@ -244,10 +244,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_villa'])) {
                              $fileName = basename($_FILES['new_images']['name'][$i]);
                              $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                              $newFileName = 'villa_' . $currentVillaId . '_' . time() . '_' . uniqid() . '.' . $fileExtension;
-                             $destination = $uploadDir . $newFileName;
+            $destination = $uploadDir . $newFileName;
                              $dbPath = $dbPathPrefix . $newFileName;
 
-                             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                              if (in_array($fileExtension, $allowedExtensions)) {
                                  if (move_uploaded_file($tmpName, $destination)) {
                                      // Determine if this new upload should be the main image
@@ -268,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_villa'])) {
                                      error_log("Failed to move uploaded file: " . $fileName . " to " . $destination . ". Check permissions and path.");
                                      $message .= "<p class='error-message'>Kon bestand '{$fileName}' niet verplaatsen. Controleer server permissies.</p>";
                                  }
-                             } else {
+                    } else {
                                   error_log("Invalid file type uploaded: " . $fileName);
                                   $message .= "<p class='error-message'>Ongeldig bestandstype: '{$fileName}'. Toegestaan: JPG, PNG, GIF, WEBP.</p>";
                              }
@@ -339,7 +339,7 @@ $db->closeConnection($conn); // Close connection after processing or fetching
             <div class="admin-action-buttons">
                  <a href="admin.php" class="btn btn-secondary"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                  <a href="villas.php" class="btn btn-back"><i class="fas fa-arrow-left"></i> Terug naar Overzicht</a>
-            </div>
+        </div>
         </header>
 
         <?= $message ?>
@@ -380,7 +380,7 @@ $db->closeConnection($conn); // Close connection after processing or fetching
                          <div class="form-group form-group-third">
                             <label for="badkamers">Badkamers *</label>
                             <input type="number" id="badkamers" name="badkamers" required min="0" value="<?= htmlspecialchars($villa['badkamers'] ?? 0) ?>">
-                        </div>
+                </div>
                     </div>
                      <div class="form-row">
                         <div class="form-group form-group-half">
@@ -400,7 +400,7 @@ $db->closeConnection($conn); // Close connection after processing or fetching
 
                 <div class="form-section">
                     <h3>Status & Opties</h3>
-                     <div class="form-row">
+                <div class="form-row">
                         <div class="form-group form-group-half checkbox-group">
                             <input type="checkbox" id="verkocht" name="verkocht" value="1" <?= ($villa['verkocht'] ?? 0) ? 'checked' : '' ?>>
                             <label for="verkocht">Markeer als Verkocht</label>
@@ -438,14 +438,14 @@ $db->closeConnection($conn); // Close connection after processing or fetching
 
                  <div class="form-section">
                     <h3>Afbeeldingen Beheren</h3>
-                     <div class="form-group">
+                    <div class="form-group">
                          <label for="new_images">Nieuwe Afbeeldingen Toevoegen (max. 5)</label>
                          <input type="file" id="new_images" name="new_images[]" multiple accept="image/*">
                          <small>Selecteer één of meerdere afbeeldingen (JPG, PNG, GIF, WEBP).</small>
-                     </div>
-                     
+                    </div>
+
                      <?php if (!empty($existingImages)): ?>
-                     <div class="form-group">
+                    <div class="form-group">
                          <label>Huidige Afbeeldingen</label>
                          <div class="image-management-grid">
                              <?php foreach ($existingImages as $img): ?>
@@ -465,10 +465,10 @@ $db->closeConnection($conn); // Close connection after processing or fetching
                              <?php endforeach; ?>
                          </div>
                          <small>Selecteer 'Hoofd' om de hoofdafbeelding in te stellen. Vink 'Verwijder' aan om afbeeldingen te verwijderen bij opslaan.</small>
-                     </div>
+                    </div>
                      <?php else: ?>
                         <p>Er zijn nog geen afbeeldingen voor deze woning.</p>
-                     <?php endif; ?>
+                <?php endif; ?>
                 </div>
 
                 <div class="form-actions">

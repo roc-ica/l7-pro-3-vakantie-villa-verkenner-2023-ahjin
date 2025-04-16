@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../includes/footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="../script/script.js" defer></script>
+    <script src="../scripts/responsive.js" defer></script>
 </head>
 
 <body>
@@ -24,17 +25,24 @@ require_once __DIR__ . '/../../db/class/filter.php';
 
 // --- Initialize Filter Values ---
 $filters = [
-    'zoekterm' => $_GET['zoekterm'] ?? '',
+    'zoekterm' => isset($_GET['zoekterm']) ? trim($_GET['zoekterm']) : '',
     'min_price' => isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0,
-    'max_price' => isset($_GET['max_price']) ? (int)$_GET['max_price'] : 0,
+    'max_price' => isset($_GET['max_price']) ? (int)$_GET['max_price'] : 5000000, // Set to max by default
     'eigenschappen' => $_GET['eigenschappen'] ?? [],
     'ligging' => $_GET['ligging'] ?? [],
     'min_area' => isset($_GET['min_area']) ? (int)$_GET['min_area'] : 0,
-    'max_area' => isset($_GET['max_area']) ? (int)$_GET['max_area'] : 0,
+    'max_area' => isset($_GET['max_area']) ? (int)$_GET['max_area'] : 2000, // Increased from 1000 to 2000
     'kamers' => isset($_GET['kamers']) ? (int)$_GET['kamers'] : 0,
     'slaapkamers' => isset($_GET['slaapkamers']) ? (int)$_GET['slaapkamers'] : 0,
     'badkamers' => isset($_GET['badkamers']) ? (int)$_GET['badkamers'] : 0,
 ];
+
+// Debug search parameters
+if (!empty($filters['zoekterm'])) {
+    error_log("woningen.php: Search term: " . $filters['zoekterm']);
+    // Add extra debug output to confirm it's being passed to the filter correctly
+    error_log("woningen.php: Filter array: " . print_r($filters, true));
+}
 
 // --- Fetch Filter Options ---
 $filterHandler = new Filter($filters);
@@ -44,17 +52,17 @@ $locationOptions = $filterHandler->getLocationOptions();
 // --- Fetch Filtered Villas ---
 $properties = $filterHandler->getFilteredVillas();
 
-// If no filters are applied, get all villas
+// Only use direct query if absolutely no filters are applied
 if (empty($filters['zoekterm']) && 
-    $filters['min_price'] == 0 && 
-    $filters['max_price'] == 0 && 
+    $filters['min_price'] <= 0 && 
+    $filters['max_price'] >= 5000000 && 
     empty($filters['eigenschappen']) && 
     empty($filters['ligging']) && 
-    $filters['min_area'] == 0 && 
-    $filters['max_area'] == 0 && 
-    $filters['kamers'] == 0 && 
-    $filters['slaapkamers'] == 0 && 
-    $filters['badkamers'] == 0) {
+    $filters['min_area'] <= 0 && 
+    $filters['max_area'] >= 1000 && 
+    $filters['kamers'] <= 0 && 
+    $filters['slaapkamers'] <= 0 && 
+    $filters['badkamers'] <= 0) {
     
     // Create database connection
     $db = new Database();
@@ -187,9 +195,9 @@ $separator = !empty($queryString) ? '&' : '';
                      </span>
                      <div class="slider-container">
                          <label for="area-slider-min" class="sr-only">Min Oppervlakte</label>
-                         <input type="range" id="area-slider-min" name="min_area" min="0" max="1000" step="10" value="<?= htmlspecialchars($filters['min_area'] ?: 0) ?>">
+                         <input type="range" id="area-slider-min" name="min_area" min="0" max="2000" step="10" value="<?= htmlspecialchars($filters['min_area'] ?: 0) ?>">
                          <label for="area-slider-max" class="sr-only">Max Oppervlakte</label>
-                         <input type="range" id="area-slider-max" name="max_area" min="0" max="1000" step="10" value="<?= htmlspecialchars($filters['max_area'] ?: 1000) ?>">
+                         <input type="range" id="area-slider-max" name="max_area" min="0" max="2000" step="10" value="<?= htmlspecialchars($filters['max_area'] ?: 2000) ?>">
                     </div>
                 </div>
 

@@ -9,8 +9,8 @@ if (!SessionManager::validateAdminSession()) {
 }
 
 // Database connection
-$db = new Database();
-$conn = $db->getConnection();
+    $db = new Database();
+    $conn = $db->getConnection();
 $villas = [];
 $message = ''; // For success/error messages
 
@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             // Delete the villa
             $deleteStmt = $conn->prepare("DELETE FROM villas WHERE id = ?");
             if ($deleteStmt->execute([$villaIdToDelete])) {
-                 $conn->commit();
+            $conn->commit();
                 $message = "<p class='success-message'>Villa succesvol verwijderd.</p>";
             } else {
-                 $conn->rollBack();
+            $conn->rollBack();
                 $message = "<p class='error-message'>Fout bij het verwijderen van de villa.</p>";
             }
         } catch (PDOException $e) {
@@ -138,12 +138,12 @@ $db->closeConnection($conn);
                                         <a href="../pages/detailview.php?id=<?= $villa['id'] ?>" target="_blank" class="btn-action btn-view" title="Bekijk op website"><i class="fas fa-eye"></i></a>
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
+                    <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
                                 <td colspan="8">Geen woningen gevonden.</td>
                             </tr>
-                        <?php endif; ?>
+                    <?php endif; ?>
                     </tbody>
                 </table>
             </section>

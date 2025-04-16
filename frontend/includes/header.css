@@ -114,3 +114,93 @@ a {
     color: #009688;
     border-color: #009688;
   }
+
+/* Mobile menu button */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #009688;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 8px 15px;
+    border-radius: 25px;
+  }
+  
+  .logo img {
+    height: 32px;
+  }
+  
+  .nav-links li {
+    margin-left: 15px;
+  }
+  
+  .register-btn, .login-btn {
+    padding: 4px 10px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+  
+  .logo img {
+    height: 28px;
+  }
+  
+  .nav-links li {
+    margin-left: 10px;
+  }
+  
+  .nav-links a {
+    font-size: 14px;
+  }
+  
+  .register-btn, .login-btn {
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 5px 10px;
+    border-radius: 18px;
+  }
+  
+  .logo img {
+    height: 24px;
+  }
+  
+  .nav-links li {
+    margin-left: 8px;
+  }
+  
+  .nav-links a {
+    font-size: 13px;
+  }
+  
+  .register-btn, .login-btn {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+  
+  /* Fix header positioning */
+  .navbar-container {
+    padding: 10px 5px;
+  }
+  
+  /* Fix mobile overflow */
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+}
