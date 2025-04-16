@@ -11,10 +11,10 @@
             <div class="footer-column">
                 <h3>Menu</h3>
                 <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Woningen</a></li>
-                    <li><a href="#">Ons</a></li>
-                    <li><a href="#">Contact</a></li>
+                    <li><a href="homepage.php">Home</a></li>
+                    <li><a href="woningen.php">Woningen</a></li>
+                    <li><a href="overons.php">Ons</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
 
