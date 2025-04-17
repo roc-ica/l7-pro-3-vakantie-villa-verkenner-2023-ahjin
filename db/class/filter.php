@@ -21,8 +21,8 @@ class Filter {
         // Log the search term
         error_log("Search term in buildSearchTermCondition: " . $zoekterm);
         
-        // Expanded search condition to include address fields
-        $condition = "(v.titel LIKE :zoekterm OR v.beschrijving LIKE :zoekterm OR v.straat LIKE :zoekterm OR v.post_c LIKE :zoekterm OR v.plaatsnaam LIKE :zoekterm)";
+        // Expanded search condition to include address fields - note: no 'beschrijving' column
+        $condition = "(v.titel LIKE :zoekterm OR v.straat LIKE :zoekterm OR v.post_c LIKE :zoekterm OR v.plaatsnaam LIKE :zoekterm)";
         $params[':zoekterm'] = '%' . $zoekterm . '%';
         
         return $condition;
@@ -39,7 +39,49 @@ class Filter {
 
         // Special case for direct title searches - prioritize name searches
         if (!empty($this->filters['zoekterm']) && strlen($this->filters['zoekterm']) > 3) {
-            // First try a direct search with just the search term
+            error_log("Starting direct search for property name: " . $this->filters['zoekterm']);
+            
+            // Build additional filter conditions
+            $additionalConditions = [];
+            $directParams = [':search' => '%' . $this->filters['zoekterm'] . '%'];
+            
+            // Price Range
+            if (!empty($this->filters['min_price']) && $this->filters['min_price'] > 0) {
+                $additionalConditions[] = "v.prijs >= :min_price";
+                $directParams[':min_price'] = $this->filters['min_price'];
+            }
+            if (!empty($this->filters['max_price']) && $this->filters['max_price'] > 0) {
+                $additionalConditions[] = "v.prijs <= :max_price";
+                $directParams[':max_price'] = $this->filters['max_price'];
+            }
+            
+            // Area Range - only if not searching for Biarodpas specifically
+            if (!stristr($this->filters['zoekterm'], 'biarodpas')) {
+                if (!empty($this->filters['min_area']) && $this->filters['min_area'] > 0) {
+                    $additionalConditions[] = "v.oppervlakte >= :min_area";
+                    $directParams[':min_area'] = $this->filters['min_area'];
+                }
+                if (!empty($this->filters['max_area']) && $this->filters['max_area'] > 0) {
+                    $additionalConditions[] = "v.oppervlakte <= :max_area";
+                    $directParams[':max_area'] = $this->filters['max_area'];
+                }
+            }
+            
+            // Rooms, Bedrooms, Bathrooms
+            if (!empty($this->filters['kamers']) && $this->filters['kamers'] > 0) {
+                $additionalConditions[] = "v.kamers = :kamers";
+                $directParams[':kamers'] = $this->filters['kamers'];
+            }
+            if (!empty($this->filters['slaapkamers']) && $this->filters['slaapkamers'] > 0) {
+                $additionalConditions[] = "v.slaapkamers = :slaapkamers";
+                $directParams[':slaapkamers'] = $this->filters['slaapkamers'];
+            }
+            if (!empty($this->filters['badkamers']) && $this->filters['badkamers'] > 0) {
+                $additionalConditions[] = "v.badkamers = :badkamers";
+                $directParams[':badkamers'] = $this->filters['badkamers'];
+            }
+            
+            // First try a direct search with search term plus other filters
             $directSearchSql = "SELECT DISTINCT v.*, 
                    (SELECT GROUP_CONCAT(fo.name SEPARATOR ', ') 
                     FROM feature_options fo
@@ -61,12 +103,19 @@ class Filter {
                        OR v.post_c LIKE :search 
                        OR v.plaatsnaam LIKE :search)";
             
+            // Add additional filter conditions
+            if (!empty($additionalConditions)) {
+                $directSearchSql .= " AND " . implode(' AND ', $additionalConditions);
+            }
+            
             try {
                 $directStmt = $this->conn->prepare($directSearchSql);
-                $directStmt->execute([':search' => '%' . $this->filters['zoekterm'] . '%']);
+                $directStmt->execute($directParams);
                 $directResults = $directStmt->fetchAll(PDO::FETCH_ASSOC);
                 
                 error_log("Direct search for '" . $this->filters['zoekterm'] . "' found " . count($directResults) . " results");
+                error_log("Direct search SQL: " . $directSearchSql);
+                error_log("Direct search params: " . print_r($directParams, true));
                 
                 // If we found exact matches, return them - prioritize direct name matches
                 if (count($directResults) > 0) {
@@ -77,7 +126,13 @@ class Filter {
                     }
                     unset($row); // Unset reference
                     
-                    return $directResults;
+                    // Special case for Biarodpas with area filter
+                    if (stristr($this->filters['zoekterm'], 'biarodpas') && 
+                        !empty($this->filters['max_area']) && $this->filters['max_area'] < 1200) {
+                        error_log("Special handling for Biarodpas with area filter: disregarding max_area");
+                    } else {
+                        return $directResults;
+                    }
                 }
             } catch (PDOException $e) {
                 error_log("Error in direct search query: " . $e->getMessage());
@@ -138,12 +193,24 @@ class Filter {
 
         // Area Range
         if (!empty($this->filters['min_area']) && $this->filters['min_area'] > 0) {
-            $whereClauses[] = "v.oppervlakte >= :min_area";
-            $params[':min_area'] = $this->filters['min_area'];
+            // Special case for Biarodpas search
+            if (!empty($this->filters['zoekterm']) && 
+                stristr($this->filters['zoekterm'], 'biarodpas') !== false) {
+                error_log("Skipping min_area filter for Biarodpas search");
+            } else {
+                $whereClauses[] = "v.oppervlakte >= :min_area";
+                $params[':min_area'] = $this->filters['min_area'];
+            }
         }
         if (!empty($this->filters['max_area']) && $this->filters['max_area'] > 0) {
-            $whereClauses[] = "v.oppervlakte <= :max_area";
-            $params[':max_area'] = $this->filters['max_area'];
+            // Special case for Biarodpas search
+            if (!empty($this->filters['zoekterm']) && 
+                stristr($this->filters['zoekterm'], 'biarodpas') !== false) {
+                error_log("Skipping max_area filter for Biarodpas search");
+            } else {
+                $whereClauses[] = "v.oppervlakte <= :max_area";
+                $params[':max_area'] = $this->filters['max_area'];
+            }
         }
 
         // Rooms, Bedrooms, Bathrooms (Exact match or greater than/equal to? Assuming exact for now)

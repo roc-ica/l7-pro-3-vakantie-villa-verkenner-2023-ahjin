@@ -299,5 +299,62 @@ $separator = !empty($queryString) ? '&' : '';
 </div>
 <?php include '../includes/footer.php'; ?>
 
+<!-- JavaScript for functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter toggle
+        const filterButton = document.getElementById('filter-toggle');
+        const filterOptions = document.querySelector('.filter-options');
+        
+        // Initialize - hide filter options by default
+        filterOptions.style.display = 'none';
+        
+        // Update button text based on current state
+        function updateButtonText() {
+            if (filterOptions.style.display === 'none') {
+                filterButton.textContent = '⚙️ Filter opties ▲';
+            } else {
+                filterButton.textContent = '⚙️ Filter opties ▼';
+            }
+        }
+        
+        // Set initial button text
+        updateButtonText();
+        
+        // Add click event listener
+        filterButton.addEventListener('click', function() {
+            if (filterOptions.style.display === 'none') {
+                filterOptions.style.display = 'block';
+            } else {
+                filterOptions.style.display = 'none';
+            }
+            updateButtonText();
+        });
+        
+        // Counter buttons for Rooms, Bedrooms, Bathrooms
+        setupCounter('kamers');
+        setupCounter('slaapkamers');
+        setupCounter('badkamers');
+        
+        function setupCounter(id) {
+            const minusBtn = document.getElementById(`${id}-minus`);
+            const plusBtn = document.getElementById(`${id}-plus`);
+            const input = document.getElementById(id);
+            
+            minusBtn.addEventListener('click', function() {
+                let value = parseInt(input.value);
+                if (value > 0) {
+                    input.value = value - 1;
+                }
+            });
+            
+            plusBtn.addEventListener('click', function() {
+                let value = parseInt(input.value);
+                input.value = value + 1;
+            });
+        }
+    });
+</script>
+
 </body>
 </html>

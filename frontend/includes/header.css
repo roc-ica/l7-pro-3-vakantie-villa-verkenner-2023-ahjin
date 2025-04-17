@@ -18,6 +18,7 @@ a {
     position: relative;
     min-height: 100px;
     overflow: hidden;
+    width: 100%;
   }
   
   /* Floating Navbar */
@@ -28,6 +29,7 @@ a {
     width: 100%;
     z-index: 100;
     padding: 20px;
+    box-sizing: border-box;
   }
   
   .navbar {
@@ -41,27 +43,35 @@ a {
     padding: 10px 25px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     flex-direction: row !important; /* Force horizontal layout */
+    flex-wrap: nowrap; /* Prevent wrapping */
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .logo img {
     height: 40px;
+    display: block;
   }
   
   .nav-links {
     display: flex;
     align-items: center;
     flex-direction: row !important; /* Force horizontal layout */
+    padding: 0;
+    margin: 0;
   }
   
   .nav-links li {
     margin-left: 25px;
     width: auto !important; /* Override width restriction */
     text-align: left !important; /* Override centering */
+    white-space: nowrap; /* Prevent text wrapping */
   }
   
   .nav-links a {
     position: relative;
     transition: color 0.3s;
+    display: inline-block; /* Better spacing control */
   }
   
   .nav-links a::after {
@@ -134,6 +144,7 @@ a {
   .navbar {
     padding: 8px 15px;
     border-radius: 25px;
+    width: 95%;
   }
   
   .logo img {
@@ -151,9 +162,14 @@ a {
 }
 
 @media (max-width: 600px) {
+  .navbar-container {
+    padding: 10px;
+  }
+  
   .navbar {
-    padding: 6px 12px;
+    padding: 8px 12px;
     border-radius: 20px;
+    width: 95%;
   }
   
   .logo img {
@@ -161,27 +177,34 @@ a {
   }
   
   .nav-links li {
-    margin-left: 10px;
+    margin-left: 12px;
   }
   
   .nav-links a {
     font-size: 14px;
   }
-  
-  .register-btn, .login-btn {
-    padding: 3px 8px;
-    font-size: 12px;
-  }
 }
 
 @media (max-width: 480px) {
+  .navbar-container {
+    padding: 10px 5px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  
   .navbar {
-    padding: 5px 10px;
+    padding: 6px 10px;
     border-radius: 18px;
+    width: 95%;
+    margin: 0 auto;
   }
   
   .logo img {
     height: 24px;
+  }
+  
+  .nav-links {
+    justify-content: flex-end;
   }
   
   .nav-links li {
@@ -190,16 +213,7 @@ a {
   
   .nav-links a {
     font-size: 13px;
-  }
-  
-  .register-btn, .login-btn {
-    padding: 2px 6px;
-    font-size: 11px;
-  }
-  
-  /* Fix header positioning */
-  .navbar-container {
-    padding: 10px 5px;
+    padding: 2px 4px;
   }
   
   /* Fix mobile overflow */

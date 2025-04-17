@@ -1,0 +1,28 @@
+/* Default state - filter panel is hidden */
+.filter-options {
+    display: none;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* When the filter panel has show class, display it */
+.filter-options.show {
+    display: block;
+}
+
+/* Remove any media query that automatically shows filters on desktop */
+@media (min-width: 768px) {
+    .sidebar {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    /* Don't force display the filter-options - we still want the toggle button to control it */
+    /*.filter-options {
+        display: block;
+    }*/
+} 
